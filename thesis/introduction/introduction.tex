@@ -1,0 +1,51 @@
+\chapter{Introduction}
+
+NoSQL databases are seeing ever increasing adoption rates due to their performance and scalability. Many such systems have the capacity to be deployed on premises or in the data center for use as Software as a Service. These systems are gaining reputation for their high performance and availability, outperforming relational databases of the same scale. These features make NoSQL databases a very attractive option for large established enterprises and small startups alike who wish their systems to be accessible around the globe while staying performant and (mostly) correct. As these databases are distributed systems, one of the properties they must provide is durability. Without this, companies may lose data. Further, the data stored must remain correct and updates must not be lost under failures. Unfortunately, all previous work testing the durability of these systems under failures has been performed in-house and no comparable metric between all major systems exists.
+
+Durability was coined as part of the larger ACID acronym by \citet{acid}. Durability is the guarantee that once a transaction has been committed, it will remain committed even in the case of a system failure. This means that a durable system can withstand arbitrary numbers of failures and will \textit{never} lose an operation that it has already acknowledged. This is a vital property that is seen in practically \textit{all} relational databases and hence is something that developers are familiar with and come to expect from their database systems. It is imperative that we gain a better understanding of durability in such distributed systems, as their use becomes ever more widespread. This must be done to ensure that developers and users of these systems are equipped with the knowledge of how to improve durability of their systems and diagnose durability failures if and when they appear.
+
+MongoDB was first released is 2009 and has seen a high level of adoption in enterprise and small-scale deployments. As its use increased, so did the users' discovery that MongoDB and other similar systems do not provide the same guarantees as relational databases. In particular, the makers of MongoDB had experience with durability and consistency issues in their previous version - MongoDB version 3 \citep{jepsen-2017, jepsen-2018}. This is a clear indication that even cutting-edge database systems may still suffer from unexpected durability failures, further showing the need for a betterment of the community's understanding of durability.
+
+Our work focuses on allowing systems designers and users to increase the durability of their systems by understanding and measuring the durability of writes in MongoDB under various configurations and failures. We provide a method for empirically measuring the durability of MongoDB configurations using only the operations that can be found in other major NoSQL document stores. We also present a detailed understanding of how certain configuration affect the durability of writes across the entire replica set. Throughout this thesis, we adopt a client-centric perspective towards write durability, where we observe the state of the data in the same way as it would be observed by a user and developer, as distinct from what can be observed by MongoDB itself. We focus on single-item operations as these tend to make up the vast majority of common document store workloads, while yielding the most granular level of insight into the durability properties of these systems.  %and conclude that the state of the model is inefficient to meet industry standards. This paper explores these issues and comments to provide the reader with many observations that create a greater number of questions that will only be discovered and delivered after I recieve my uni medal. ty ty. 
+
+\section{Contributions}
+While the literature has presented many consistency and failure models, much less has appeared concerning durability. As such, we have chosen to focus our study on the evaluation of durability of writes of MongoDB during failures, applying a theoretical and empirical approach to this task.
+
+The main objective of this thesis is to enhance the community's understanding of write durability. In particular, we seek to equip users and developers with the tools to measure and evaluate durability and performance properties of distributed storage systems. This can allow them to improve the durability of these systems and identify the sources of data loss. We also provide users with the means to reason about varying levels of durability at the individual write level and apply this reasoning estimate and evaluate the durability characteristics of their distributed storage systems. We do this by providing a theory and methodology of estimating write durability using rudimentary measurements from basic MongoDB configurations.
+
+Overall, our contributions are outlined as follows:
+\begin{enumerate}
+    \item A categorisation and evaluation of the conditions needed to cause write durability failures.
+    \item An experiment design capable of inducing a loss of writes under failures in a MongoDB replica set, producing an execution history of all events in the process.
+    \item The algorithm used to process the execution history and quantify the amount of durability failures presented by the execution, while also reporting performance metrics for that execution.
+    \item Empirical results to show that the experiment design and processing of its output give quantitative metrics of frequency and quantity of non-durable writes, along with performance metrics in the form of latency and throughput of operations in these experiments. In particular, we detect (known) durability and performance problems in MongoDB 3.6-rc0 and demonstrate that MongoDB 4.0 fixed these issues.
+    \item A novel theoretical model for evaluating the time it takes for an acknowledged write to become durable, along with an estimation for when a write becomes durable on the primary.
+    \item An empirical study of time-till-durability in terms of the time period until acknowledged writes become durable based on this theory.
+    
+    % \item A proposal on ATMs for blind and non local people
+    % \item A case study for the collaberation with Telstra in service department survey in 2018
+    % \item A implementation of SUITS website, not plagirised because it was mentioned at the bottom the github
+    % \item An enagament to the best person in the world. I know. Im very lucky
+    % \item A long list of offers from companies, except for google cause they are douches (and my wonderful fiance warned me about them from the start), that also makes again my great fiances life complicated
+    % \item 2 Surgeries, 1 stomach that was well enjoyed with Morphone and other was not in a High state - was getting my dick chopped off
+    % \item Money contribution to the wedding of the century, the most exclusive wedding of SIT
+    % \item A lack of cuddles and kishys to my fiance which may need to be extended by me immediately.
+    % \item Max brenner pizzas for my fiance when she is sick
+    % \item Diabetes that my fiance gets from Max Brenner
+    % \item Opened my fiance to the glorious GYG
+    % \item Made my fiance obese from eating too much GYG
+    % \item Being the least productive IT Officer after he became IT Officer because he was sleeping with the Secretary and then the president 
+\end{enumerate}
+
+Together, these contributions allow system users and designers to verify the durability of their distributed storage systems, understand the sources of data loss, empirically evaluate durability and performance tradeoffs of different solutions and reason about varying levels of durability in terms of the latency of when a write becomes durable.
+
+\section{Outline}
+The thesis is split into 4 parts, each addressing a core aspect of our research and providing a detailed account of our contributions.
+
+Part \ref{p:bk} of the thesis outlines the background of the work, including a review of the academic literature relevant to this research in \prettyref{chap:litreview}, followed by a more indepth exploration of relevant MongoDB internals in \prettyref{chap:background}.
+
+Part \ref{p:det} builds on the understanding gained from the background and focuses on work regarding detection of durability failures. In \prettyref{chap:det-theory} we present an analysis of the conditions that result in a durability failure, categorising durability failures into three distinct types. We proceed with an experiment design and our method for measuring the quantity of durability failures given an execution history, in \prettyref{chap:experiments}. We discuss the results, their implications and our approach in \prettyref{chap:det-results}.
+
+In Part \ref{p:est} we use the results from Part \ref{p:det} as motivation for a theoretical approach to analysing the time-till-durability. We begin by presenting a body of theoretical work regarding a granular and flexible form of write durability, where we focus on the time it takes for a write to reach a given level of durability. We then use this theory to derive a result for estimating durability in \prettyref{chap:kdur-theory}. This is followed up with an empirical study of time-till-durability in MongoDB based on this theory, along with a discussion of our findings in \prettyref{chap:kdur-results}.
+
+The thesis concludes with Part \ref{p:conc} with a discussion of the implications and significance of this research while providing suggestions for future work.

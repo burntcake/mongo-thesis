@@ -1,0 +1,28 @@
+﻿{
+    "connection": {
+        "replicas": [
+            "mongo1",
+            "mongo2",
+            "mongo3"
+        ],
+
+        "replicaSet": "rs0",
+
+        "database":  "test",
+        "collection":  "testCollection"
+    },
+
+    "concerns": {
+        "read":  "linearizable",
+        "write":  "majority"
+    },
+
+    "intervals": {
+        "read":  10,
+        "write": 100,
+        "experiment": 60000
+    },
+
+    "failure": "shutdown"
+
+}

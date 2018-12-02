@@ -1,0 +1,38 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2017
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDBExperiments", "MongoDBExperiments.csproj", "{81C13C0B-F3B2-4DCF-83D8-2B9E9D157225}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{81C13C0B-F3B2-4DCF-83D8-2B9E9D157225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81C13C0B-F3B2-4DCF-83D8-2B9E9D157225}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81C13C0B-F3B2-4DCF-83D8-2B9E9D157225}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81C13C0B-F3B2-4DCF-83D8-2B9E9D157225}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		Policies = $0
+		$0.TextStylePolicy = $1
+		$1.inheritsSet = null
+		$1.scope = text/x-csharp
+		$0.CSharpFormattingPolicy = $2
+		$2.scope = text/x-csharp
+		$0.TextStylePolicy = $3
+		$3.FileWidth = 80
+		$3.TabsToSpaces = True
+		$3.scope = text/plain
+		$0.TextStylePolicy = $4
+		$4.TabsToSpaces = True
+		$4.NoTabsAfterNonTabs = True
+		$4.scope = text/x-json
+		$0.JSONFormattingPolicy = $5
+		$5.AutoStructureCompletion = True
+		$5.BracePositions = SemiExpanded
+		$5.FormatOnPaste = True
+		$5.scope = text/x-json
+	EndGlobalSection
+EndGlobal

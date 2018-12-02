@@ -1,0 +1,303 @@
+\chapter{Results} \label{chap:det-results}
+
+In this chapter, we show that our experiment design detects expected write losses in MongoDB 4.0 and 3.6-rc0, while also finding (known) durability and performance bugs in 3.6-rc0, which have been fixed in 4.0. We present the results of our experiments and give quantitative metrics for the frequency and quantity of non-durable writes, along with performance metrics for varying MongoDB configurations. We proceed to evaluate the results of our experiments and conclude with a discussion of their limitations.
+
+\section{Environment}
+
+The environment used for experiments consisted of 3 virtual machines running on a single host. The host has a 2.2Ghz Intel Core i7 processor, with 16GB RAM and a 256GB SSD. It runs Ubuntu 16.04, and uses VirtualBox 5.1.28 to host the virtual machines. 
+
+The three virtual machines were each dedicated 2GB RAM and 20GB of pre-allocated disk space, running Ubuntu Server 16.04.5. They are networked together via a Host-Only network that allows the host and the VMs to communicate with each other at very stable sub-millisecond latencies. Each virtual machine was configured to honour all disk flushes as to ensure parity between which writes MongoDB expected to be persisted and which writes are indeed persisted on disk. The three virtual machines were all installed with the same version of MongoDB and configured to run in a single replica set.
+
+Two of these environments were generated for two versions of MongoDB. The MongoDB versions used were 4.0 and 3.6-rc0. MongoDB 4.0 is the current LTS version of MongoDB and will act as our control measurement, while MongoDB 3.6-rc0 is a version with known durability issues. The reason for testing both is to see whether our experiment can find durability failures and whether the current version of MongoDB has any such failures.
+
+Each failure was induced via a call to VirtualBox's \texttt{VBoxManage}.
+
+All experiments were run from the host, with the host being the sole issuer of queries and write operations to the replica set. The experiment harness is written in .NET Core, using the MongoDB Driver 2.7.0.
+
+We achieve parallel execution by having multiple threads perform these operations, each tracking their own documents and values.
+
+\section{Write Durability}
+
+We ran each experiment for 5 minutes, including the failure at the 100 second point and fixing the failure at the 200 second point. 
+
+Tables \ref{tab:res-1}-\ref{tab:res-8} present the summative results of these experiments. Overall, we see that MongoDB 4.0 performs as predicted by our theoretical analysis. Any write concern that ensures acknowledgement only on the primary does not guarantee durability if the primary fails. This applies to the Primary and Journaled write concerns.
+
+On the other hand, MongoDB 3.6-rc0 is shown to have durability failures even when majority of the replica set have acknowledged the operation. This implies that MongoDB 3.6-rc0 has software flaws in the way it measures acknowledgement from secondary replicas and how it handles recovery and elections after a failure. It should be noted that these durability failures were only seen in experiments utilising a very heavy write load onto the replica set, which means that these durability failures may also be a result of flawed persistence mechanisms. We should add that such write-heavy workloads are unlikely to appear in real world applications, which tend to involve more read operations from the database.
+
+\subsection{Primary Preferred Read Preference}
+We also make a note of \prettyref{tab:res-4}, where the Primary Preferred, Majority, Majority case resulted in 9 lost writes. Upon inspection of the execution history, we find that \textit{all} write losses in this experiment were transient. Specifically, they followed the pattern seen in \prettyref{fig:transitive-loss}. This was the only experiment that exhibited transient losses, all other experiments either showed no write loss, or permanent write loss - where a lost write was never seen after being detected as lost.
+
+This type of behaviour is expected, given that this read preference will force the MongoDB client to read from the secondary if the primary is unavailable, instead of waiting for the primary's response. If the client then reads from a secondary that had not yet seen the operation, the data returned from the query will not include it - leading to a loss. However, once a new primary is elected, the client will query only the primary, hence seeing the write again. Fundamentally, this shows that a Primary Preferred read preference removes all guarantees about the data queried from the replica set during a failure, \textit{unless} the write has propagated to all secondaries. Given these results, we recommend that a configuration with a Primary Preferred read preference should always have the write concern configured to "all" - that is, all secondary replicas must acknowledge the write before it is acknowledged to the client.
+
+\begin{figure}
+    \begin{CVerbatim}
+write x = 1
+...
+read  x -> x = 1
+...
+read  x -> x = -1
+...
+read  x -> x = 1
+...
+    \end{CVerbatim}
+    \label{fig:transitive-loss}
+    \caption{Example of a transient loss observed with Primary Preferred read preference}
+\end{figure}
+
+\subsection{Journaled vs Primary Write Concern}
+
+We observe that for non-majority-majority experiments, using the Journaled write concern does not always reduce the number of lost writes. The cases which see a reduction are only the write-heavy workloads (write probability 0.7). This implies that Journaled write concern reduces the chances of a write loss as a result of not persisting the write. 
+
+However we see that Journaled write concern experiences increased write-loss compared to experiments with a Primary write concern in a standard write-load workload (write probability 0.3). This is a strong indication that these write losses occur as a result of a rollback due to a reelection, as the operation itself is more likely to be persisted to disk.
+
+As such, we conclude that Journaled Write Concern acts as a tradeoff - it reduces the likelihood of persistence failures but increases the time to send the operation to the secondaries, hence increasing the probability and magnitude of a rollback failure. In contrast, the Primary write concern attempts to minimise communication delay at the cost of not providing guarantees about the persistence of an operation.
+
+\subsection{Write Loss distribution}
+Having established the principal causes for write loss, and finding examples of these during the experiments, we now turn our attention to determining \textit{when} write loss occurs. Figures \ref{fig:loss-1} and \ref{fig:loss-2} plot the number of lost writes against the time within the experiment when the write was submitted.
+
+From Figures \ref{fig:loss-1} \& \ref{fig:loss-2} we see that only writes which are acknowledged immediately before or while a failure is being induced are prone to loss. This is intuitive as those operations are the ones in the process of being persisted and being communicated to secondary nodes. 
+
+
+We should observe the relationship between the write loss distribution and error distribution (Figures \ref{fig:err-1}, \ref{fig:err-2}) of the experiments. Specifically, we note that there are few to no errors present at the time of the failure. This is a direct result of the MongoDB client waiting for responses. The timeout for a response was configured to be 5 seconds. As such, errors spike at around 105 seconds and continue to persist for approximately 20 seconds. This represents the influx of timeout errors from the MongoDB client during the election process for a new primary.
+
+We note that during all experiments, all write losses were found on \textit{unique} documents - no document suffered multiple write losses during a single run of the experiment.
+
+Furthermore, we see a unique pattern of errors in \prettyref{fig:err-2}, where the main peak of errors takes place immediately after the failure is induced. However smaller peaks of errors then tail-off until the failure is fixed and the failed node recovers. The reason for this error can be found by looking at the pattern of write operations for this experiment in Figures \ref{fig:writes-36pmm} \& \ref{fig:reads-36pmm}. 
+
+We notice that there are \textit{no successful write operations} during the entire failure phase of the experiment. This is even more peculiar considering that \textit{some} read operations succeeded during this phase, returning correct values the vast majority of the time. This indicates that MongoDB 3.6-rc0 has a bug in its recovery flows which causes the new elected primary to ignore all write operations, but still accept some read operations. Considering that this behaviour was not seen in any other experiment - either in 3.6-rc0 or 4.0, we can be confident that the bug was fixed in the 4.0 version of MongoDB.
+
+Using these results, we can now explain the tailing-off of errors in \prettyref{fig:err-2}. Soon after the failure is induced, all operations that were submitted to the replica set time out and return as a massive spike in errors. After this initial surge, a new set of write operations and queries is sent to the replica set. Some of the queries return successfuly while all write operations time out. This results in a reduction of total errors reported. The cycle keeps repeating, each time all write operations timing out and only some read operations doing the same. When the failure is fixed and the failed node joins the replica set, all operations start returning successfully, hence dropping the number of errors back to 0. 
+
+\begin{figure}
+    \input{images/shutdown_writes.pgf}
+    \caption{Distribution of write loss for every second of experiment 3 in \prettyref{tab:res-6}}
+    \label{fig:loss-1}
+\end{figure}
+
+\begin{figure}
+    \input{images/poweroff_writes.pgf}
+    \caption{Distribution of write loss for every second of experiment 3 in \prettyref{tab:res-8}}
+    \label{fig:loss-2}
+\end{figure}
+
+\begin{figure}
+    \input{images/shutdown_errors.pgf}
+    \caption{Distribution of errors for every second of experiment 3 in \prettyref{tab:res-6}}
+    \label{fig:err-1}
+\end{figure}
+
+\begin{figure}
+    \input{images/poweroff_errors.pgf}
+    \caption{Distribution of errors for every second of experiment 3 in \prettyref{tab:res-8}}
+    \label{fig:err-2}
+\end{figure}
+
+\begin{figure}
+    \input{images/3.6pmm_writes.pgf}
+    \caption{Distribution of successful write operations of experiment 3 in \prettyref{tab:res-8}}
+    \label{fig:writes-36pmm}
+\end{figure}
+
+\begin{figure}
+    \input{images/3.6pmm_reads.pgf}
+    \caption{Distribution of successful read operations of experiment 3 in \prettyref{tab:res-8}}
+    \label{fig:reads-36pmm}
+\end{figure}
+
+\subsection{Performance}
+
+Having established the durability properties of the MongoDB configurations used in these experiments, we will now address performance as the main tradeoff to the durability guarantees these configurations provide. 
+
+\subsubsection{Write Concerns}
+
+Figures \ref{fig:lat-plp}, \ref{fig:lat-plj} \& \ref{fig:lat-pmm} show the average latencies of write operations for the first three experiments performed in \prettyref{tab:res-4} . We will consider any operation with latency of 2000ms or more as timed out. We found that read latencies were not affected by write concerns and so we did not include them in this analysis.
+
+We can immediately observe that as we increase the strength of write concern (where Primary is the weakest and Majority is strongest), we also increase the average latency of the operations performed with that write concern. Recall from \prettyref{sec:writeconcern} that as the strength the write concern increases, MongoDB has to perform more actions prior to acknowledging the operation. This is exactly the reason for the increasing average latencies.
+
+However we make another observation in these results. Figures \ref{fig:lat-plj} and \ref{fig:lat-pmm} show a noticeable but temporary increase in latency soon after the 200 second mark - the recovery phase of the experiment. In our experiments, the recovery phase is signified by turning on the failed replica and letting it rejoin the replica set as a secondary, which would also involve performing synchronisation and rollbacks to be in sync with the new primary. It is likely that this extra load on the primary replica reduces the resources available for it to respond to queries and update its copy of the data. Another possibility is that synchronisation may require that certain documents be locked while they're being synchronised, causing a delay to acknowledging any operations on those documents until after the primary has confirmed that they've been synchronised with the secondary. 
+
+\subsubsection{Read Preferences}
+
+Another dimension of our experiments concerns the effect of read preference on how the client reacts to failures in the replica set. Figures \ref{fig:rlat-plp} \& \ref{fig:rlat-pplp} show the average latencies of read operations for two equivalent experiments, only varying the read preference between Primary and Primary Preferred. During this analysis, we will consider any operations that took 2000ms or longer as timed out.
+
+We immediately observe that Primary Preferred and Primary reads behave differently under a failure. Primary reads exhibit the behaviour indicative of timeouts for approximately 20 seconds after a failure is induced and return to a relatively stable state afterwards.
+
+On the other hand, Primary Preferred reads tend to return very quickly after a failure for only 10 seconds after it is induced, returning back to normal operation soon after. The small spike immediately at the point of failure implies that the client was trying to query from the Primary while it was failing, resulting in a small number of timeouts. This implies that the client was able to identify the primary replica as failing and start querying secondaries as per its read preference. The reasoning behind the significant drop in latency is unknown but may be attributed to the significantly reduced load on the replica set, as no write operations are being applied.
+
+The more peculiar result is found around the time the failed node rejoins the replica set, between 180 seconds and 230 seconds into the experiment. During this time frame, the execution exhibits a very unstable latency pattern, with latencies jumping between 100ms at the lowest and 900ms at the highest. We could not determine the source of this anomaly, but postulate that it may be affected by the process in charge of adding a new secondary to the replica set.
+
+\begin{figure}
+    \input{images/lat_plp.pgf}
+    \caption{Latency of write operations for every second of experiment 1 in \prettyref{tab:res-4}}
+    \label{fig:lat-plp}
+\end{figure}
+
+\begin{figure}
+    \input{images/lat_plj.pgf}
+    \caption{Latency of write operations for every second of experiment 2 in \prettyref{tab:res-4}}
+    \label{fig:lat-plj}
+\end{figure}
+
+\begin{figure}
+    \input{images/lat_pmm.pgf}
+    \caption{Latency of write operations for every second of experiment 3 in \prettyref{tab:res-4}}
+    \label{fig:lat-pmm}
+\end{figure}
+
+\begin{figure}
+    \input{images/rlat_plp.pgf}
+    \caption{Latency of read operations for every second of experiment 1 in \prettyref{tab:res-3}}
+    \label{fig:rlat-plp}
+\end{figure}
+
+\begin{figure}
+    \input{images/rlat_pplp.pgf}
+    \caption{Latency of read operations for every second of experiment 4 in \prettyref{tab:res-3}}
+    \label{fig:rlat-pplp}
+\end{figure}
+
+\section{Discussion}
+
+Much of the results we obtained were as we expected. Nonetheless, we recognise that our method had limitations. These limitations spanned across our methodology and resources. 
+The main limitations are as follows:
+\begin{enumerate}
+    \item All failures were induced \textit{only} on the primary.
+    \item Only one failure was induced per experiment.
+    \item Timeout errors created uncertainty about document state.
+    \item Uniformly random document selections.
+    \item Analysis was based only on the execution history, not the internal replica logs.
+\end{enumerate}
+
+\subsection{Failures exclusively on the Primary}
+The decision to induce failures exclusively on the primary arose from recognising that the primary replica is the arbiter of all write operations in a replica set. As such, by making the primary fail, we ensure that the replica set \textit{must} go through some kind of recovery flow. Unfortunately, this means our methodology did not account for any behaviours that would arise from when a secondary replica (or multiple secondaries) fail and how this would impact the durability and performance of the replica set. 
+
+\subsection{One failure per experiment}
+Our experiment was designed to be analysed in three segments - normal operation, failure and recovery. In order to ensure a distinguishable cutoff point for each segment, we only induced a single failure and fixed it after a specified time period. This fundamentally limited what kinds of errors and scenarios we could induce as part of the experiment. Specifically, we did not investigate a case of repeated or ongoing failures of a node, such as repeated restarts due to misconfiguration. This could stress how elections handle an unstable, but functional, primary.
+
+\subsection{Timeout Errors}
+Having inspected the results, we found a large number of errors being reported by the analysis script. The majority of these errors are simply timeouts and are mostly present during the time that the failure is induced in the primary. These timeouts are a result of the election procedure that must take place when the primary crashes in order for MongoDB to select a new primary replica. As there is no arbiter for write operations present during this time, no write operations can be acknowledged. If the read preference is set to \textit{Primary}, no read operations can be acknowledged either. This causes those operations to wait until the primary is available, which may take longer than the configured timeout, resulting in an error. 
+
+We must also address that our experiment harness only queries and modifies documents that have their ID's in the list of acknowledged writes. This has the observable consequence that an update operation could be committed on the replica set but the acknowledgement not be received by the client. We can therefore reason that \textit{Create Document} operations may suffer from the same issue. This kind of ambiguity can easily mask durability failures as it prevents us from having a complete view of all documents in the replica set, in particular preventing us from querying documents that have been committed to the replica set but not entered into the list of acknowledged writes because of a timeout. This is especially problematic since durability failures tend to happen \textit{during} a failure - at the same time as the timeouts.
+
+\subsection{Uniformly random document selection}
+It is common knowledge that data is not accessed in a uniform manner. Our experiment used a simple random number generator to decide which document to read or update. As such, our workload did not represent a realistic scenario of operations performed on the database. For example, the uniform selection ensures minimal contention for documents in the queries at the database-level, meaning that we are not observing how MongoDB handles high contention during failures.
+
+\subsection{Execution history, not replica logs}
+Our methodology concentrated on detecting write losses by looking at the execution history. We did not inspect the native MongoDB logs as part of our study because we concentrated on finding immediately visible durability failures in MongoDB, from the view of the a user/client of the database. This limitation meant we could not pick up certain durability failures, such as write rollbacks on secondary nodes.
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+    \toprule
+    Read Preference   & Read Concern & Write Concern & Throughput & Errors & Lost Writes  \\ \midrule
+    Primary           & Local        & Primary       & 763824     & 1177   & 400          \\
+    Primary           & Local        & Journaled     & 828721     & 28760  & 331          \\
+    Primary           & Majority     & Majority      & 798183     & 31212  & 0            \\
+    Primary Preferred & Local        & Primary       & 846215     & 8142   & 141          \\
+    Primary Preferred & Local        & Journaled     & 840277     & 9181   & 421          \\
+    Primary Preferred & Majority     & Majority      & 765270     & 7499   & 0            \\ \bottomrule
+    \end{tabular}
+    \caption{Experiment results MongoDB 4.0 with \textit{Shutdown} failure on 0.3 write probability}
+    \label{tab:res-1}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+        \toprule
+        Read Preference  & Read Concern & Write Concern & Throughput & Errors & Lost Writes \\ \midrule
+        Primary          & Local        & Primary       & 693570     & 101310 & 2223        \\
+        Primary          & Local        & Journaled     & 647880     & 89464  & 1733        \\
+        Primary          & Majority     & Majority      & 641685     & 86279  & 0           \\
+        Primary Preferred & Local        & Primary       & 782852     & 66952  & 1800        \\
+        Primary Preferred & Local        & Journaled     & 705703     & 50119  & 180         \\
+        Primary Preferred & Majority     & Majority      & 646299     & 51933  & 0           \\ \bottomrule
+        \end{tabular}
+    \caption{Experiment results MongoDB 4.0 with \textit{Shutdown} failure on 0.7 write probability}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+        \toprule
+        Read Preference  & Read Concern & Write Concern & Throughput & Errors & Lost Writes \\ \midrule
+        Primary          & Local        & Primary       & 738601     & 2135   & 261         \\
+        Primary          & Local        & Journaled     & 759628     & 25906  & 2834        \\
+        Primary          & Majority     & Majority      & 757109     & 21838  & 0           \\
+        Primary Preferred & Local        & Primary       & 805828     & 1037   & 706         \\
+        Primary Preferred & Local        & Journaled     & 770923     & 11868  & 171         \\
+        Primary Preferred & Majority     & Majority      & 777713     & 18867  & 0           \\ \bottomrule
+        \end{tabular}
+    \caption{Experiment results MongoDB 4.0 with \textit{Poweroff} failure on 0.3 write probability}
+    \label{tab:res-3}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+        \toprule
+        Read Preference  & Read Concern & Write Concern & Throughput & Errors & Lost Writes \\ \midrule
+        Primary          & Local        & Primary       & 767995     & 59474  & 1763        \\
+        Primary          & Local        & Journaled     & 649970     & 49109  & 1217        \\
+        Primary          & Majority     & Majority      & 566651     & 50420  & 0           \\
+        Primary Preferred & Local        & Primary       & 712128     & 6144   & 4540        \\
+        Primary Preferred & Local        & Journaled     & 730408     & 74884  & 238         \\
+        Primary Preferred & Majority     & Majority      & 534430     & 33748  & 9           \\ \bottomrule
+        \end{tabular}
+    \caption{Experiment results MongoDB 4.0 with \textit{Poweroff} failure on 0.7 write probability}
+    \label{tab:res-4}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+        \toprule
+        Read Preference  & Read Concern & Write Concern & Throughput & Errors & Lost Writes \\ \midrule
+        Primary          & Local        & Primary       & 605527     & 666    & 70          \\
+        Primary          & Local        & Journaled     & 613437     & 33398  & 352         \\
+        Primary          & Majority     & Majority      & 628248     & 35591  & 0           \\
+        Primary Preferred & Local        & Primary       & 672897     & 9760   & 393         \\
+        Primary Preferred & Local        & Journaled     & 664797     & 8093   & 581         \\
+        Primary Preferred & Majority     & Majority      & 688463     & 10962  & 0           \\ \bottomrule
+        \end{tabular}
+    \caption{Experiment results MongoDB 3.6-rc0 with \textit{Shutdown} failure on 0.3 write probability}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+    \toprule
+    Read Preference  & Read Concern & Write Concern & Throughput & Errors & Lost Writes \\ \midrule
+    Primary          & Local        & Primary       & 569716     & 85219  & 210         \\
+    Primary          & Local        & Journaled     & 546575     & 953    & 87          \\
+    Primary          & Majority     & Majority      & 412634     & 62548  & 40          \\
+    Primary Preferred & Local        & Primary       & 595135     & 44845  & 1097        \\
+    Primary Preferred & Local        & Journaled     & 549167     & 51327  & 387         \\
+    Primary Preferred & Majority     & Majority      & 536845     & 74019  & 0           \\ \bottomrule
+    \end{tabular}
+    \label{tab:res-6}
+    \caption{Experiment results MongoDB 3.6-rc0 with \textit{Shutdown} failure on 0.7 write probability}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+        \toprule
+        Read Preference  & Read Concern & Write Concern & Throughput & Errors & Lost Writes \\ \midrule
+        Primary          & Local        & Primary       & 663695     & 17754  & 1319        \\
+        Primary          & Local        & Journaled     & 663009     & 15741  & 1815        \\
+        Primary          & Majority     & Majority      & 628013     & 15211  & 0           \\
+        Primary Preferred & Local        & Primary       & 706243     & 5633   & 1189        \\
+        Primary Preferred & Local        & Journaled     & 676734     & 709    & 335         \\
+        Primary Preferred & Majority     & Majority      & 676025     & 5204   & 0           \\ \bottomrule
+        \end{tabular}
+    \caption{Experiment results MongoDB 3.6-rc0 with \textit{Poweroff} failure on 0.3 write probability}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{@{}lllccc@{}}
+        \toprule
+        Read Preference  & Read Concern & Write Concern & Throughput & Errors & Lost Writes \\ \midrule
+        Primary          & Local        & Primary       & 472444     & 110326 & 5589        \\
+        Primary          & Local        & Journaled     & 597266     & 65285  & 457         \\
+        Primary          & Majority     & Majority      & 338798     & 126149 & 2           \\
+        Primary Preferred & Local        & Primary       & 581263     & 32181  & 255         \\
+        Primary Preferred & Local        & Journaled     & 608816     & 36625  & 2782        \\
+        Primary Preferred & Majority     & Majority      & 571397     & 34555  & 0           \\ \bottomrule
+        \end{tabular}
+    \caption{Experiment results MongoDB 3.6-rc0 with \textit{Poweroff} failure on 0.7 write probability}
+    \label{tab:res-8}
+\end{table}

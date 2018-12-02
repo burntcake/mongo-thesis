@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <LangVersion>Latest</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MongoDB.Driver" Version="2.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Autofac" Version="4.8.1" />
+    <PackageReference Include="CommandLineParser" Version="2.2.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Config\" />
+    <Folder Include="Experiment\" />
+    <Folder Include="Utils\" />
+    <Folder Include="Failures\" />
+    <Folder Include="MongoUtils\" />
+    <Folder Include="Utils\Logging\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Utils\IFailureLogger.cs" />
+    <Compile Remove="Failures\IFailureRunner.cs" />
+    <Compile Remove="Config\ConcernSettings.cs" />
+    <Compile Remove="Failures\ImmutableDiskFailure.cs" />
+    <Compile Remove="Failures\CorruptionFailure.cs" />
+    <Compile Remove="Utils\Logging\ErrorRecord.cs" />
+    <Compile Remove="Analyzer\LogAnalyzer.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="re" />
+  </ItemGroup>
+</Project>

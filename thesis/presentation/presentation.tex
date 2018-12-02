@@ -1,0 +1,560 @@
+\documentclass[numfooter,sectionpages,protectFrameTitle, progressbar, cblock, valigncolumns, addlogo]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage[round]{natbib}
+\usetheme{sthlm}
+\bibliographystyle{plainnat}
+
+\title{Evaluating Durability of Distributed Databases}
+\subtitle{Theory and Empirical Studies of MongoDB}
+\date{\today}
+\author{Kosta Dunn \\ Supervisor: Alan Fekete}
+
+\begin{document}
+\maketitle
+
+\section{Background}
+
+\begin{frame}
+    \frametitle{Durability}
+
+    \begin{center}
+    \textit{Once a transaction has been committed, it will remain committed even in the case of a crash of 1 or more machines.}
+    \end{center}
+
+    It is one of the ACID properties, which ensures that an operation which has been acknowledged \textit{cannot} be lost. \citep{acid}
+
+    Durability is violated if an \textit{acknowledged write is lost}.
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{MongoDB}
+
+    MongoDB is a widely used distributed database system. It is becoming one of the primary choices for storing critical user data.
+
+    \begin{itemize}
+        \item Document model
+        \item Document = Row (in traditional database)
+        \item No schema
+    \end{itemize}
+
+    It provides high performance, availability and consistency. These properties are achieved via \textit{replication}.
+
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Replication}
+
+    \centering
+    
+    \includegraphics[width=0.8\textwidth]{rep1}
+
+    Create a \textit{replica set} by copying data across multiple machines...
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Replication}
+
+    \centering
+        \includegraphics[width=0.8\textwidth]{rep2}
+
+        ...So when one machine goes down...
+\end{frame}
+
+\begin{frame}
+    \frametitle{Replication}
+
+    \centering
+        \includegraphics[width=0.8\textwidth]{rep3}
+
+        ... The data (and hence the service) are still available!
+\end{frame}
+
+\begin{frame}
+    \frametitle{Replication in MongoDB}
+
+    \centering
+    \includegraphics[height=.625\textheight]{../images/mongodbreplicaset.png}
+
+    MongoDB uses a \textit{Primary-Backup} strategy. \textbf{One} Primary, \textbf{the rest} are Secondaries.
+
+    All \textbf{write} operations must go through the Primary.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Replication in MongoDB}
+    
+    \centering
+    \includegraphics[height=.625\textheight]{../images/mongodbprimaryfail.png}
+
+    If a primary is down, \textbf{no write operations} can be acknowledged.
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Replication in MongoDB}
+    
+    \centering
+    \includegraphics[height=.625\textheight]{../images/mongodbelection.png}
+
+    When the Primary fails, all working Secondaries perform an \textit{election} to select a new primary.
+\end{frame}
+
+\begin{frame}
+    \frametitle{MongoDB Journal}
+
+    \begin{center}
+    \includegraphics[height=0.5\textheight]{../images/Buffering1.pdf}
+    A journal is used to \textit{recover} after failure by "replaying" the operations.
+
+    MongoDB with \textbf{Journaled} writes will \textbf{send acknowledgements} without them going to disk!
+
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{MongoDB Specifics}
+
+    MongoDB allows users to configure the \textit{strength} of their writes through the \textbf{write concern}. 
+    
+    Stronger = harder to lose, but longer to acknowledge.
+
+    \pause
+
+    \begin{description}
+        \item[\textbf{Primary}] Operation is applied to the data on the primary
+        \item[\textbf{Journaled}] Operation is applied to data and added to Journal on the primary
+        \item[\textbf{Majority}] Operation is applied and added to Journal on the \textit{majority} of the replicas.
+    \end{description}
+
+    \pause 
+
+    Under \textbf{Majority} write concern, there should be \textit{no write loss!}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{What has been done}
+    \citet{cap} conjectured that databases cannot be simultaneously \textit{Consistent, Available and Network failure tolerant}. \citet{cap-proof} proved this result. \\
+    $\Rightarrow$ There are limits to the capability of any database!
+
+    A tool "Jepsen" was developed to test effects of \textit{Network failures} on databases. \citep{jepsen-2013, jepsen-2017, jepsen-2018}
+
+    And \citet{correlated-crash} studied durability when \textit{all} replicas fail, with a focus on file systems. \\
+    Note: probability of \textit{all} replicas failing is \textbf{incredibly slim}.
+
+    \begin{center}
+        There is \textbf{no work} on durability of distributed databases under single machine failures.
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{The Aim}
+    \begin{center}
+        \textit{
+            To equip users and designers of distributed databases with the means to protect their systems from durability failures.
+        }
+    \end{center}
+\end{frame}
+
+% \begin{frame}
+%     \frametitle{How we achieve this}
+%     \begin{itemize}
+%         \item Enhancing their understanding of the \textbf{sources of data loss}.
+%         \item Providing them with the means to \textbf{quantitatively measure durability} of their systems.
+%         \item Empirically evaluating the \textbf{tradeoffs} between durable and performant configurations.
+%         \item Offering a methodology to reason about and measure the \textbf{time it takes} for a write to become durable.
+%     \end{itemize}
+% \end{frame}
+
+\begin{frame}
+
+    \frametitle{Thesis Contributions}
+
+    \begin{itemize}
+        \item \textbf{Categorisation of \textit{scenarios} that result in write loss.}
+        \item \textbf{Design of an experiment capable of inducing write loss.}
+        \item Algorithm to quantify the number of lost writes.
+        \item \textbf{Empirical results to show that the experiment and algorithm work by detecting bugs in MongoDB 3.6-rc0.}
+        \item Theoretical model for evaluating when a write becomes durable.
+        \item \textbf{Estimation of when a write becomes durable on the \textit{Primary}, using rudimentary client-accessible measurements.}
+        \item \textbf{An empirical study of time-till-durability on the \textit{Primary} for acknowledged writes.}
+    \end{itemize}
+
+\end{frame}
+
+% \begin{frame}
+%     \frametitle{Contributions (extra)}
+
+%     \begin{itemize}
+%         \item An experiment design capable of inducing a loss of writes, producing an execution history of all events in the process.
+%         \item The algorithm used to process the execution history and quantify the amount of durability failures presented by the execution
+%         \item A novel theoretical model for evaluating the time it takes for an acknowledged write to become durable.
+%     \end{itemize}
+% \end{frame}
+
+\section{Detecting and Quantifying Durability Failures}
+
+\begin{frame}
+    \frametitle{Big picture}
+
+    \begin{center}
+    Can we create a scenario that \textit{forces} MongoDB to lose a write?
+
+    How big is the impact of these scenarios?
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Write Loss scenario}
+
+    \centering
+    \begin{figure}
+        \includegraphics[width=0.9\textwidth]{../images/np1.pdf}
+    \end{figure}
+    We issue a \textbf{Journaled} write and get an \textit{acknowledgement}.
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Write Loss scenario}
+
+    \centering
+    \begin{figure}
+        \includegraphics[width=0.9\textwidth]{../images/np2.pdf}
+    \end{figure}
+    The Primary \textit{crashes}.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Write Loss scenario}
+
+    \centering
+    \begin{figure}
+        \includegraphics[width=0.9\textwidth]{../images/np3.pdf}
+    \end{figure}
+    The Primary \textit{loses} any writes still \textit{in-memory}.
+\end{frame}
+
+\begin{frame}
+    \frametitle{How do we do this empirically?}
+    We created a tool that:
+    \begin{itemize}
+        \item Configures a replica set
+        \item Stresses it with reads and writes
+        \item Crashes the Primary \textbf{100 seconds} into experiment.
+        \item Recovers the (old) Primary \textbf{200 seconds} into experiment.
+        \item Observes \textit{incorrect values} in queries.
+    \end{itemize}
+\end{frame}
+
+% \begin{frame}
+%     \frametitle{Experiment Design}
+
+%     \begin{itemize}
+%         \item 3 virtual machines configured as 1 MongoDB replica set
+%         \item 3 stages
+%         \item 2 failure types
+%         \item Workload of single document operations
+%         \item Output as a \textit{execution history}
+%     \end{itemize}
+
+% \end{frame}
+
+% \begin{frame}
+%     \frametitle{Experiment stages}
+
+%     \begin{description}
+%         \item[\textbf{Standard operation}] The virtual machines are started in "Headless" mode and run normally.
+%         \item[\textbf{Operating under failure}] A failure was induced on the primary. Depending on the type of failure, the machine may disconnect from the replica set initiating an election. 
+%         \item[\textbf{Recovery}] The failure is reverted and the failed machine is connected back to the replica set if it hasn't already.
+%     \end{description}
+
+%     Each of the threes stages occupies a third of the experiment time: 
+% \end{frame}
+
+% \begin{frame}
+%     \frametitle{Failures}
+
+%     \begin{description}
+%         \item[\textbf{ACPI Shutdown}] Sends an ACPI shutdown signal to the primary VM to trigger a graceful shutdown of the machine.
+%         \item[\textbf{Hard Poweroff}] Simulates an abrupt power failure, which turns the VM off immediately.
+%     \end{description}
+
+% \end{frame}
+
+% \begin{frame}
+%     \frametitle{Workload}
+
+%     3 types of operations:
+%     \begin{itemize}
+%         \item Create Document
+%         \item Read Document
+%         \item Update Document
+%     \end{itemize}
+
+% \end{frame}
+
+\begin{frame}
+    \frametitle{Results - Write Loss: Mongo 4.0}
+    \centering
+    \begin{figure}
+        \scalebox{.5}{\input{../images/40loss.pgf}}
+        \caption{Distribution of write loss for every second in MongoDB 4.0.}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Results - Write Loss: Mongo 3.6-rc0}
+    
+    \begin{figure}
+        \scalebox{.5}{\input{../images/36loss.pgf}}
+        \caption{Distribution of write loss for every second in MongoDB 3.6-rc0.}
+    \end{figure}
+\end{frame}
+
+% \begin{frame}
+%     \frametitle{Results - 3.6rc-0 Performance}
+
+%     \begin{figure}
+%         \scalebox{.5}{\input{../images/3.6pmm_writes.pgf}}
+%         \caption{Distribution of successful write operations in above experiment.}
+%         \label{fig:writes-36pmm}
+%     \end{figure}
+
+% \end{frame}
+
+\begin{frame}
+    \frametitle{Results - Summary}
+
+    MongoDB 4.0 performs as predicted by our theory. Found losses where we expect based on our theory.
+
+    MongoDB 3.6-rc0 loses writes where they \textit{shouldn't be lost}.
+
+    $\Rightarrow$ Our tool succeeded in detecting bugs in MongoDB 3.6-rc0.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Conclusion}
+
+    \centering
+    Our tool works!
+\end{frame}
+
+
+% \begin{frame}
+%     \frametitle{Results - performance: Write Concerns}
+
+%     \begin{figure}
+%         \scalebox{0.5}{\input{../images/lat_plp.pgf}}
+%         \caption{Latency of write operations for Primary write concern}
+%     \end{figure}
+
+% \end{frame}
+
+% \begin{frame}
+%     \frametitle{Results - performance: Write Concerns}
+
+%     \begin{figure}
+%         \scalebox{0.5}{\input{../images/lat_plj.pgf}}
+%         \caption{Latency of write operations for Journaled write concern}
+%     \end{figure}
+
+% \end{frame}
+% \begin{frame}
+%     \frametitle{Results - performance: Write Concerns}
+
+%     \begin{figure}
+%         \scalebox{0.5}{\input{../images/lat_pmm.pgf}}
+%         \caption{Latency of write operations for Majority write concern}
+%     \end{figure}
+
+% \end{frame}
+
+\section{Estimating when Writes Become Durable}
+
+\begin{frame}
+    \frametitle{Big Picture}
+
+    Write loss is more common the closer the write is to the failure.
+
+    Can we estimate when our writes becomes durable, at least on the \textit{Primary} replica?
+\end{frame}
+
+\begin{frame}
+    \frametitle{When does a write become durable?}
+
+    \begin{center}
+        \includegraphics[height=.625\textheight]{../images/write1.pdf} \\
+        A write becomes \textit{durable} when it gets \textit{persisted to disk}. \\
+        In other words $l + d$.
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Problem}
+
+    \begin{center}
+        \includegraphics[height=.625\textheight]{../images/write1.pdf} \\
+        \textbf{We can't measure $d$.}
+    \end{center}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{What can we measure?}
+
+    \begin{itemize}
+        \item Latency $l$ (ping)
+        \item Response time of write operations... \pause With different \textbf{write concerns}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Estimating $d$ from Write Concerns}
+
+    Which \textbf{write concern} persists a write to \textit{disk}?
+    \pause 
+
+    \textbf{Journaled}!
+\end{frame}
+
+\begin{frame}
+    \frametitle{Journaled Write Concern}
+
+    A \textbf{Journaled} write will be \textit{applied to memory} and \textit{added to the journal} before being acknowledged. 
+
+    Since the journal does not always hit the disk, we have only an \textit{approximation}.
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Modelling Journaled Write Concern}
+    \centering
+    \includegraphics[height=.625\textheight]{../images/j_write.pdf} \\
+    Behaviour of a \textbf{Journaled} write.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Modelling Journaled Write Concern}
+    That means, a \textbf{Journaled} write is:
+    \[
+        j = l + d_{est} + l
+    \]
+\end{frame}
+
+\begin{frame}
+    \frametitle{Estimating durability}
+
+    We want to estimate $t = l + d$ (time to durability).
+
+    We know $l$ and $j = l + d_{est} + l$.
+
+    We then define the \textbf{estimate} as $t_{est} = j - l$:
+    \begin{align*}
+        t_{est}     &= j - l \\
+              &= l + d_{est} \\
+              &\approx l + d
+    \end{align*}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Results - latency distribution}
+
+    \begin{figure}
+        \centering        
+        \scalebox{.5}{\input{../images/latencies.pgf}}
+        \caption{A frequency graph of the number of write operations acknowledged at latencies of 1-1000ms.}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Results - cumulative distribution}
+
+    \begin{figure}
+        \centering        
+        \scalebox{.5}{\input{../images/cum.pgf}}
+        \caption{A cumulative frequency graph of the writes which become acknowledged and 1-durable at latencies 1-1000ms.}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Results - Summary}
+
+    We can \textit{estimate} when a write becomes durable on the primary by looking \textit{how long} a \textbf{Journaled} write takes to come back.
+
+    In our case, 90\% of writes are durable by 300ms.
+\end{frame}
+
+
+\section{Conclusion}
+
+\begin{frame}
+    \frametitle{Thesis Findings}
+
+    \begin{itemize}
+        \item Identified and categorised scenarios which cause writes to be lost.
+        \item Created a tool capable of inducing write loss.
+        \item Designed an algorithm to quantify write loss.
+        \item Showed that our tool works by finding bugs in MongoDB.
+        \item Derived a formula for when a write becomes durable on any number of replicas.
+        \item Developed an estimation of when a write becomes durable on the \textit{Primary}, using rudimentary client-accessible measurements. 
+        \item Found that 90\% of writes are durable by 300ms after submission.
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Limitations}
+
+    \begin{itemize}
+        \item Induced only \textbf{one} failure per experiment, only on the Primary replica.
+        \item Only used client-accessible measurements.
+        \item Focused on durability only on the Primary.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Future Work}
+
+    \begin{itemize}
+        \item Induce multiple failures, on any replica
+        \item Investigate MongoDB's own logs
+        \item Explore estimating durability on any number of replicas
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Thesis Contributions}
+
+    This presentation focused on a subset of our thesis contributions. Here is the complete list:
+
+    \begin{itemize}
+        \item Categorisation of \textit{scenarios} that result in write loss.
+        \item Design of an experiment capable of inducing write loss.
+        \item Algorithm to quantify the number of lost writes.
+        \item Empirical results to show that the experiment and algorithm work by detecting bugs in MongoDB 3.6-rc0.
+        \item Theoretical model for evaluating when a write becomes durable.
+        \item Estimation of when a write becomes durable on the \textit{Primary}, using rudimentary client-accessible measurements.
+        \item An empirical study of time-till-durability on the \textit{Primary} for acknowledged writes.
+    \end{itemize}
+
+
+\end{frame}
+
+\begin{frame}[allowframebreaks]
+    \frametitle{References}
+    \bibliography{references.bib}
+\end{frame}
+
+\end{document}

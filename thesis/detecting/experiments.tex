@@ -1,0 +1,132 @@
+\chapter{Experiment Design \& Methodology} \label{chap:experiments}
+
+In this chapter we offer a design and methodology of an experiment and analysis that can quantitatively evaluate the durability of a distributed storage system by measuring the frequency and quantity of write loss under failures. The experiment induces the conditions we identified in \prettyref{chap:det-theory}, and \prettyref{chap:det-results} will report on running the experiments on MongoDB.
+
+\section{Database Contents}
+
+Each document has a simple ID \& value structure as seen in \prettyref{alg:doc}.
+
+\begin{algorithm}
+\caption{Example document}
+\begin{verbatim}
+{
+    Id:  5,
+    Val: 7
+}
+\end{verbatim}
+\label{alg:doc}
+\end{algorithm}
+
+\section{Methodology}
+
+The experiment is set up by creating three identical virtual machines with the database system installed and configured to run in a replica set. We then run a stress test on the replica set using a single client on the host machine which initiates many operations, on separate threads, in parallel. The operations performed are reads, writes and updates on randomly chosen documents with randomly chosen values.
+
+During the run of the experiment, the harness records an execution history, keeping track of each operation performed and error returned by the replica set. Each read, write and update operation is individually recorded into the execution history along with the document id corresponding to the document the operation is performed on,
+the timestamp and duration of the operation. Each read record contains the value returned by the database, while the write and update records contain the new value written to the document. Any operations that result in an error are also recorded with the same data.
+
+\begin{figure}
+    \begin{CVerbatim}
+R,5b9f25ef2644855182a9201c,1042661835,66.689,1537156641143
+U,5b9f25ef2644855182a9201c,705768886,1.132,1537156641288
+ERR,W,5b9f25f82644855182a92ff2,834995024,22.04,1537156641795
+R,5b9f25ef2644855182a9201c,705768886,58.42,1537156641830
+    \end{CVerbatim}
+    \caption{Sample excerpt of an execution history}
+\end{figure}
+
+The experiment is broken into three stages with each stage occupying a third of the experiment time:
+
+\begin{description}
+    \item[Standard operation] The virtual machines are started in "Headless" mode and run normally.
+    \item[Operating under failure] A failure is induced on the primary. The primary replica disconnects from the replica set initiating an election. 
+    \item[Recovery] The failure is reverted and the failed machine is connected back to the replica set.
+\end{description}
+
+\section{Failures}
+
+The failures induced during the experiments involve shutting down the primary replica and observing how the secondary nodes behave immediately after the shutdown. The timestamps for when a failure is induced and fixed are also entered into the execution history. 
+The following failures are induced in our experiment:
+
+\begin{description}
+    \item[Graceful ACPI Shutdown] Sends an ACPI shutdown signal to the virtual machine to trigger a graceful shutdown.
+    \item[Hard Poweroff] Simulates an abrupt power failure, which turns the VM off immediately.
+\end{description}
+
+Since we focus on crash-tolerant systems, we chose these failures they are supposed to be handled gracefully and correctly by the replica set. This will allow us to find concrete durability failures in the system, that should be possible to prevent within the failure assumptions the system makes. Additionally, they are common system administration scenarios of needing to restart a machine or cutting the power. The recovery flows following these failures will need to re-elect the primary after the failure and, once the failed machine is back up, allow it to "catch up" on the writes which it has not seen.
+
+\section{Workload}
+The workload of each experiment consists of three types of operations:
+
+\begin{description}
+    \item[Create Document] This operation adds a new document to the collection in the replica set. A new document is created with a value retrieved from a random number generator. Upon acknowledgement of the write from the replica set, its document ID is added to the list of IDs with acknowledged writes.
+    \item[Read document] This operation queries the replica set for a document, given its key. The key for the query is chosen randomly from a list of IDs with acknowledged writes. This means, we expect that every query should return a document. Any missing documents are therefore as a result of an error in the replica set.
+    \item[Update document] This operation modifies the value of an existing document. The key for the query is chosen randomly from a list of IDs with acknowledged writes and the value is generated using a random number generator.
+\end{description}
+
+The primary setting used to vary the workload of the experiment is \textit{write probability}, which determines how often a write operation is issued to the replica set. There are two types of write operations in this experiment - \textit{create document} and \textit{update document}. The decision between which operation to perform is random with equal likelihood.
+
+In addition, we set the Read Concern, Write Concern and Read Preference. This configuration varies between experiments, allowing us to explore the tradeoffs between these configurations and understand which configuration is best for a given scenario.
+
+\section{Execution Analysis}
+The execution history produced by each run of the experiment is analysed by Algorithm \ref{alg:eval} to produce the following data:
+\begin{description}
+    \item[Throughput] The number of successful operations performed during the entire run of the experiment.
+    \item[Errors] The number of operations that did not receive a positive acknowledgement, either they got a negative acknowledgement, or they were time out without any acknowledgement.
+    \item[Lost Writes] The number of write operations which were lost either temporarily or permanently.
+\end{description}
+
+In particular, the algorithm detects when the expected value of the document and value returned from a read are not the same or where the value is missing (denoted by a value of -1). This indicates that a write has either been lost, or that it has been committed but an acknowledgement was not received by the client. We make a distinction between these two cases by keeping track of the write operations that came back as errors to the client which allows us to handle the committed-but-not-acknowledged write and update the state of our analysis as needed. 
+
+\begin{algorithm}
+    \caption{Algorithm used for evaluating the execution history}
+    \begin{algorithmic}
+        \STATE $H \leftarrow$ execution history
+        \STATE $t_{fail} \leftarrow$ timestamp of failure induction
+        \STATE $t_{fix} \leftarrow$ timestamp of failure repair
+        \STATE $D \leftarrow \{\}$ \COMMENT{Lookup of every document's current value}
+        \STATE $D_e \leftarrow \{\}$ \COMMENT{Lookup of every write that errored for a document}
+        \STATE $E \leftarrow \{\}$ \COMMENT{Set of all errors produced}
+        \STATE $M \leftarrow \{\}$ \COMMENT{Set of missing writes}
+        \STATE $U \leftarrow \{\}$ \COMMENT{Set of unacknowledged writes}
+        \STATE $o \leftarrow 0$ \COMMENT{Number of successful operations}
+        \STATE $s \leftarrow $ Normal \COMMENT{Current state of the history (Normal, Failure or Recovery)}
+
+        \FORALL{$h \in H$}
+            \IF{$h.time \leq t_{fail}$}
+                \STATE $s \leftarrow$ Normal
+            \ELSIF{$t_{fail} < h.time \leq t_{fix}$}
+                \STATE $s \leftarrow$ Failure
+            \ELSE
+                \STATE $s \leftarrow$ Recovery
+            \ENDIF
+
+            \IF{$h.op =$ Write \OR $h.op =$ Update}
+                \STATE $o \leftarrow o+1$
+                \STATE $D[h.id] \leftarrow h.val$
+            \ELSIF{$h.op =$ Read}
+                \STATE $o \leftarrow o+1$
+                \IF{$h.val \neq D[h.id]$}
+                    \IF{$h.id \in D_e$ \AND $h.val \in D_e[h.id]$}
+                        \STATE $U \leftarrow U \cup \{(h.id, h.val, s)\}$
+                        \STATE $D[h.id] \leftarrow h.val$
+                        \STATE delete $h.val$ from $D_e[h.id]$
+                    \ELSE
+                        \STATE $M \leftarrow M \cup \{(h.id, h.val, state)\}$
+                    \ENDIF
+                \ENDIF
+            \ELSIF{$h.op =$ Induce}
+                \STATE $ s \leftarrow $ Failure
+            \ELSIF{$h.op =$ Recover} 
+                \STATE $ s \leftarrow $ Recovery
+            \ELSIF{$h.op =$ Error}
+                \STATE $E \leftarrow E \cup \{(h.err\_op, h.id, h.val, s)\}$
+                \IF{$h.err\_op =$ Write \OR $h.err\_op =$ Read}
+                    \STATE $D_e[h.id] \leftarrow D_e[h.id] \cup \{h.val\}$
+                \ENDIF
+            \ENDIF
+        \ENDFOR
+    \end{algorithmic}
+    \label{alg:eval}
+\end{algorithm}
+
+Additionally, we also use the execution history to plot the number of different measures against the time of the experiment, bucketed using bins of 1 second.

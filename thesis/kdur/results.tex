@@ -1,0 +1,46 @@
+\chapter{Results} \label{chap:kdur-results}
+
+In this chapter, we present an empirical exploration of time-till-1-durability in MongoDB based on the theory developed in \prettyref{chap:kdur-theory} and proceed to evaluate the results in light of how MongoDB handles write operations.
+
+\section{Environment}
+The experiments were performed on the same harness as the one developed in \prettyref{chap:det-results}, using the \textit{Local} read concern and \textit{Primary} read preference. The harness was configured to \textit{not} induce a failure and perform only write operations (using write probability 1). 
+
+\section{Estimating 1-durability}
+We ran two experiments, each for 5 minutes. One with write concern \textit{w:1} and one with \textit{journaled}. The execution histories were processed to count the latencies of each operation. The raw results of this collection can be seen in \prettyref{fig:latencies}.
+
+Given that there is a significant difference between the patterns of \textit{w:1} and \textit{journaled} histories, we use the journaled history and apply equation \prettyref{eq:persist} on every operation to derive the time a write becomes 1-durable. Given that VirtualBox networking is very stable, we subtract the average ping latency to the primary from every operation to determine the time that operation became 1-durable. A comparison between 1-durability and \textit{w:1} write acknowledgement can be found in \prettyref{fig:cdf}.
+
+To further clarify the differences between \textit{w:1} and 1-durability, we present a chart of the difference between the two cumulative plots in \prettyref{fig:diff}.
+
+\begin{figure}
+    \centering        
+    \input{images/latencies.pgf}
+    \label{fig:latencies}
+    \caption{A frequency graph of the number of write operations acknowledged at latencies of 1-1000ms.}
+\end{figure}
+
+\begin{figure}
+    \centering        
+    \input{images/cum.pgf}
+    \label{fig:cdf}
+    \caption{A cumulative frequency graph of the writes which become acknowledged and 1-durable at latencies 1-1000ms.}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \input{images/diff.pgf}
+    \label{fig:diff}
+    \caption{Difference in plots of \prettyref{fig:cdf}.}
+\end{figure}
+
+\section{Discussion}
+
+We observe a distinct difference in the pattern of plots in \prettyref{fig:latencies}. In particular, w:1 is shown to have multiple peaks on the latencies of which the operations tend to be acknowledged. This is likely to be due to MongoDB's need to persist the operations with w:1 write concern separately from acknowledging them, which results in certain operations being blocked due to needing to wait until the batch is persisted, before the operation can be applied to the data and acknowledged. It is likely that due to this "waiting" that peaks in latency tend to form, as MongoDB forces operations to wait while it attempts to persist a batch of older operations. This behaviour is not seen in the journaled write concern because every write is offloaded onto the WiredTiger journal, which is then solely in charge of deciding when to persist those operations, separate from MongoDB. We should emphasize that this is conjecture and more research is required to fully understand this behaviour.
+
+Additionally, we see that the peaks and troughs of w:1 and journaled plots respectively align from ~170ms to 300ms. We do not know why these alignments occur, but postulate once again that the WritedTiger journal may be playing a role in this behaviour. This further highlights the need for further research, specifically into the intrinsics of WiredTiger and its interaction with MongoDB.
+
+We also note that the journaled execution has a higher average latency, clumping around 200ms, which is expected given the additional work required by the journaling process before operation can be acknowledged. However, journaled execution also seems more stable than its w:1 counterpart, with fewer operations appearing with more than 500ms latency. This stability can also be attributed to WiredTiger, as MongoDB can offload the responsibility of persisting writes onto a separate application. The instability of w:1 is therefore a consequence of MongoDB needing to decide when to persist operations, forcing the incoming operations to wait. Specifically, if an incoming operation is found to be dependent on an operation currently being persisted, the operation will need to wait until after the flush to disk has been performed in order to be applied to memory and acknowledged.
+
+Moving on to the cumulative distribution of w:1 acknowledgements and estimated 1-durability in \prettyref{fig:cdf}, we find very predictable results, as w:1 operations get acknowledged long before those operations become 1-durable. We see an interesting result after 300ms, where the fraction of 1-durable writes overtakes w:1. This is likely due to our estimation technique, as we used the execution history of journaled writes to estimate 1-durability. As such, the increased instability of operations with the w:1 write concern in the higher latencies is the cause of this behaviour.
+
+The differences between the two plots as shown in \prettyref{fig:diff} show a similar pattern. The difference is small early on as most operations are not acknowledged by either write concern in the earlier latencies but increases rapidly until 200ms as the majority w:1 operations get acknowledged but few of the journaled operations do. The difference then drops quite sharply towards zero by 300ms as most of the journaled operations are now being acknowledged. We chose not to graph the negative difference (where 1-durable overtakes w:1).

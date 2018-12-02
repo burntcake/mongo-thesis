@@ -25,16 +25,4 @@
     <Folder Include="MongoUtils\" />
     <Folder Include="Utils\Logging\" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Remove="Utils\IFailureLogger.cs" />
-    <Compile Remove="Failures\IFailureRunner.cs" />
-    <Compile Remove="Config\ConcernSettings.cs" />
-    <Compile Remove="Failures\ImmutableDiskFailure.cs" />
-    <Compile Remove="Failures\CorruptionFailure.cs" />
-    <Compile Remove="Utils\Logging\ErrorRecord.cs" />
-    <Compile Remove="Analyzer\LogAnalyzer.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="re" />
-  </ItemGroup>
 </Project>

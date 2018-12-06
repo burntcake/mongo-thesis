@@ -1,20 +1,5 @@
 #! /usr/bin/env python3
 import matplotlib
-#matplotlib.use('pgf')
-pgf_with_pdflatex = {
-    "pgf.texsystem": "pdflatex",
-    "pgf.rcfonts": False,
-    "pgf.preamble": [
-         r"\usepackage[utf8x]{inputenc}",
-         r"\usepackage[T1]{fontenc}",
-         r"\usepackage{lmodern}",
-	],
-    'text.usetex' : True,
-    'font.size' : 11,
-    'font.family' : 'lmodern',
-    'text.latex.unicode': True,
-}
-matplotlib.rcParams.update(pgf_with_pdflatex)
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -27,8 +12,6 @@ elif argv[1] == 'w':
 else:
 	exit(1)
 
-if len(argv) < 3:
-	exit(1)
 
 
 times = input().split(',')
@@ -81,4 +64,4 @@ plt.ylabel("Latency of {} (in milliseconds)".format(text))
 plt.legend()
 
 #plt.show()
-plt.savefig(argv[2])
+plt.savefig("plot.png")

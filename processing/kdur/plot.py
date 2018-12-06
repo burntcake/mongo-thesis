@@ -1,20 +1,5 @@
 import numpy as np
 import matplotlib
-matplotlib.use('pgf')
-pgf_with_pdflatex = {
-    "pgf.texsystem": "pdflatex",
-    "pgf.rcfonts": False,
-    "pgf.preamble": [
-         r"\usepackage[utf8x]{inputenc}",
-         r"\usepackage[T1]{fontenc}",
-         r"\usepackage{lmodern}",
-	],
-    'text.usetex' : True,
-    'font.size' : 11,
-    'font.family' : 'lmodern',
-    'text.latex.unicode': True,
-}
-matplotlib.rcParams.update(pgf_with_pdflatex)
 import matplotlib.pyplot as plt
 
 from collections import Counter
@@ -55,4 +40,4 @@ plt.ylabel("Number of operations")
 plt.xlabel("Latency (in milliseconds)")
 plt.legend()
 
-plt.savefig("latencies.pgf")
+plt.savefig("latencies.png")

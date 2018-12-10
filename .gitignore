@@ -364,3 +364,11 @@ experiment_scripts/test_rest/
 processing/failures/__pycache__/
 
 experiment_scripts/\.idea/
+
+experiment_scripts/primary
+
+experiments/journaled
+
+experiments/majority
+
+experiments/primary

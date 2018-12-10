@@ -345,3 +345,13 @@ processing/kdur/diff\.png
 processing/kdur/latencies\.pgf
 
 processing/kdur/latencies\.png
+
+experiment_scripts/\.idea/
+
+experiment_scripts/__pycache__/
+
+experiment_scripts/processed_rest/
+
+experiment_scripts/test_rest/
+
+processing/failures/__pycache__/

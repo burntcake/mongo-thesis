@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from collections import Counter, defaultdict
 from sys import argv, exit
+from config import *
 if argv[1] == 'r':
 	read = True
 elif argv[1] == 'w':
@@ -64,4 +65,4 @@ plt.ylabel("Latency of {} (in milliseconds)".format(text))
 plt.legend()
 
 #plt.show()
-plt.savefig("plot.png")
+plt.savefig("{}{}_plot_{}.png".format(PROCESSING_FAILURES_RESULT_PATH, argv[2], argv[1]))

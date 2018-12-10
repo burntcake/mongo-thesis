@@ -2,6 +2,8 @@
 from collections import Counter
 import numpy as np
 import matplotlib.pyplot as plt
+from config import *
+from sys import argv
 
 docs = {}
 errored_writes = {}
@@ -113,4 +115,4 @@ y2 = [error_count[i] for i in x]
 plt.plot(x,y)
 plt.xlabel("Time of experiment (in seconds)")
 plt.ylabel("Number of writes lost")
-plt.savefig("graph.png")
+plt.savefig("{}{}_graph.png".format(PROCESSING_FAILURES_RESULT_PATH, argv[1]))

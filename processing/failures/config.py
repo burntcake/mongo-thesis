@@ -1,0 +1,1 @@
+PROCESSING_FAILURES_RESULT_PATH = "../experiment_scripts/processed_rest/"

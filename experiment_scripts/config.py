@@ -5,8 +5,6 @@ EXPERIMENT_INPUT_FILE_NAME = "exp_input"
 EXPERIMENT_HISTORY_FILE_NAME = "exp_hist"
 EXPERIMENT_OUTPUT_FILE_NAME = "exp_out"
 
-
-
 VALID_FLAGS = {
     "p" : "readpreference",
     "r" : "readconcern",

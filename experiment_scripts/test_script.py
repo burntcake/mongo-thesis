@@ -85,12 +85,11 @@ def execute_experiment_plan(commands, inputs):
     input_log = current_date + "_" + EXPERIMENT_INPUT_FILE_NAME
     exp_hist = current_date + "_" + EXPERIMENT_HISTORY_FILE_NAME
 
-    # compute total number of experiment plans
-    # record execute plans
-
+    # record user inputs
     for line in inputs:
         write_to_log(EXPERIMENT_LOG_PATH + input_log, line)
 
+    # compute total number of experiment plans
     for cmd in commands:
         total_n_exp += int(cmd[1])
 

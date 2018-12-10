@@ -352,3 +352,15 @@ experiment_scripts/.idea/workspace.xml
 experiment_scripts/.idea/experiment_scripts.iml
 *.xml
 *.iml
+
+*.png
+
+experiment_scripts/__pycache__/
+
+experiment_scripts/processed_rest/
+
+experiment_scripts/test_rest/
+
+processing/failures/__pycache__/
+
+experiment_scripts/\.idea/

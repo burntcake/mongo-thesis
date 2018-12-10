@@ -2,6 +2,8 @@ EXPERIMENT_SCRIPT_PATH = "../experiments"
 EXPERIMENT_ARGS = "--p Primary --r Local --w Journaled --experimenttime 60 --writeprobability 0.7 --failure PowerOff"
 INDRECT_DIR = ">../experiment_scripts/test_rest/"
 
+EXPERIMENT_OUTPUT_FILE_NAME = "exp_out"
+
 VALID_FLAGS = {
     "p" : "readpreference",
     "r" : "readconcern",
@@ -11,7 +13,8 @@ VALID_FLAGS = {
     "t" : "test",
     "et" : "experimenttime",
     "wp" : "writeprobability",
-    "rpt" : "repeattimes"
+    "rpt" : "repeattimes",
+    "nt" : "numthreads"
 }
 
 VALID_PARAMETERS = {

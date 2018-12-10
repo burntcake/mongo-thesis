@@ -36,6 +36,7 @@ def collect_experiment_plan():
 
 def generate_command(content):
     commands = []
+
     for line in content:
         items = re.split(',|\n',line)
         command_args = []
@@ -59,7 +60,7 @@ def generate_command(content):
                     valid_params = VALID_PARAMETERS[short_flag].keys()
                     if param in valid_params:
                         command_parameter = VALID_PARAMETERS[short_flag][param]
-                elif short_flag in ['et']:
+                elif short_flag in ['et', 'nt']:
                     if int(param) > 0:
                         command_parameter = str(int(param))
                 elif short_flag in ['wp']:
@@ -82,18 +83,22 @@ def execute_experiment_plan(commands):
     os.chdir(EXPERIMENT_SCRIPT_PATH)
     experiment_id = 0
     total_n_exp = 0
+
+    # compute total number of experiment plans
     for cmd in commands:
         total_n_exp += int(cmd[1])
 
+    # execute experiment plan
     for cmd in commands:
         repeat_time = cmd[1]
-        for i in range(repeat_time):
+        for rpt in range(repeat_time):
             print("Processing {} of {}...".format(experiment_id + 1, total_n_exp))
             params = ''.join(cmd[0])
-            filename = "exp_{0:04d}".format(experiment_id)
+            filename = "{}{0:04d}".format(EXPERIMENT_OUTPUT_FILE_NAME, experiment_id)
             dotnet_command = "dotnet run -- {} {}".format(params, INDRECT_DIR + filename)
             os.system(dotnet_command)
             experiment_id += 1
+            
 
 
 def experiment_engine():

@@ -93,8 +93,18 @@ def execute_experiment_plan(commands):
             filename = "exp_{0:04d}".format(experiment_id)
             dotnet_command = "dotnet run -- {} {}".format(params, INDRECT_DIR + filename)
             os.system(dotnet_command)
+            process_results(filename)
             experiment_id += 1
 
+def process_results(filename):
+    report_command = "python  {}report.py < {} >{}".format(PROCESSING_FAILURES_SCRIPT_PATH, PROCESSING_FAILURES_INPUT_PATH + filename, PROCESSING_FAILURES_RESULT_PATH + filename)
+    plot_read_command = "python  {}plot.py r {}< {}".format(PROCESSING_FAILURES_SCRIPT_PATH, filename, PROCESSING_FAILURES_INPUT_PATH + filename)
+    plot_write_command = "python  {}plot.py  w {}< {}".format(PROCESSING_FAILURES_SCRIPT_PATH, filename, PROCESSING_FAILURES_INPUT_PATH + filename)
+    failure_plot_command = "python  {}failure_plot.py {}< {}".format(PROCESSING_FAILURES_SCRIPT_PATH, filename, PROCESSING_FAILURES_INPUT_PATH + filename)
+    os.system(report_command)
+    os.system(plot_read_command)
+    os.system(plot_write_command)
+    os.system(failure_plot_command)
 
 def experiment_engine():
     # ask for flags and parameters for each experiment

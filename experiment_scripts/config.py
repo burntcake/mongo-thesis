@@ -1,6 +1,10 @@
 EXPERIMENT_SCRIPT_PATH = "../experiments"
+PROCESSING_FAILURES_SCRIPT_PATH = "../processing/failures/"
+PROCESSING_FAILURES_INPUT_PATH = "../experiment_scripts/test_rest/"
+PROCESSING_FAILURES_RESULT_PATH = "../experiment_scripts/processed_rest/"
 EXPERIMENT_ARGS = "--p Primary --r Local --w Journaled --experimenttime 60 --writeprobability 0.7 --failure PowerOff"
 INDRECT_DIR = ">../experiment_scripts/test_rest/"
+
 
 VALID_FLAGS = {
     "p" : "readpreference",

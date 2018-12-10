@@ -59,7 +59,7 @@ def generate_command(content):
                     valid_params = VALID_PARAMETERS[short_flag].keys()
                     if param in valid_params:
                         command_parameter = VALID_PARAMETERS[short_flag][param]
-                elif short_flag in ['et']:
+                elif short_flag in ['et', 'nt']:
                     if int(param) > 0:
                         command_parameter = str(int(param))
                 elif short_flag in ['wp']:

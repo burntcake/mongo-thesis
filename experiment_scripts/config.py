@@ -11,7 +11,8 @@ VALID_FLAGS = {
     "t" : "test",
     "et" : "experimenttime",
     "wp" : "writeprobability",
-    "rpt" : "repeattimes"
+    "rpt" : "repeattimes",
+    "nt" : "numthreads"
 }
 
 VALID_PARAMETERS = {

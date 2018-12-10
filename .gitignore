@@ -362,3 +362,5 @@ experiment_scripts/processed_rest/
 experiment_scripts/test_rest/
 
 processing/failures/__pycache__/
+
+experiment_scripts/\.idea/

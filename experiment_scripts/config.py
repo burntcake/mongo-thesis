@@ -1,8 +1,11 @@
 EXPERIMENT_SCRIPT_PATH = "../experiments"
-EXPERIMENT_ARGS = "--p Primary --r Local --w Journaled --experimenttime 60 --writeprobability 0.7 --failure PowerOff"
-INDRECT_DIR = ">../experiment_scripts/test_rest/"
-
+EXPERIMENT_REST_PATH = "../experiment_scripts/experiment_result/"
+EXPERIMENT_LOG_PATH = "../experiment_scripts/experiment_plan/"
+EXPERIMENT_INPUT_FILE_NAME = "exp_input"
+EXPERIMENT_HISTORY_FILE_NAME = "exp_hist"
 EXPERIMENT_OUTPUT_FILE_NAME = "exp_out"
+
+
 
 VALID_FLAGS = {
     "p" : "readpreference",

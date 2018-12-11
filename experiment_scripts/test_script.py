@@ -49,7 +49,18 @@ def generate_command(content):
 
             chars = re.findall("[a-z]", item)
             short_flag = ''.join(chars)
-            param = re.findall(r'-?\d+\.?\d*', item)[0]
+            param = None
+
+            if len(re.findall(r'-?\d+\.?\d*', item)) > 0:
+                param = re.findall(r'-?\d+\.?\d*', item)[0]
+
+            if len(item.split(":")) >= 2:
+                short_flag = item.split(":")[0]
+                param_list = item.split(":")[1].split("|")
+                param = " ".join(param_list)
+
+            if param is None:
+                continue
 
             if short_flag in VALID_FLAGS:
                 command_flag = VALID_FLAGS[short_flag]
@@ -62,11 +73,13 @@ def generate_command(content):
                     if int(param) > 0:
                         command_parameter = str(int(param))
                 elif short_flag in ['wp']:
-                    if float(param) <= 1 and float(param) >= 0:
+                    if float(param) <= 1:
                         command_parameter = param
                 elif short_flag == 'rpt':
                     if int(param) > 0:
                         repeat_time = int(param)
+                elif short_flag == 's':
+                    command_parameter = param
 
             if command_flag is not None and command_parameter is not None:
                 command_args.append("--" + command_flag + " " + command_parameter + " ")

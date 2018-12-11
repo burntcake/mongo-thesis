@@ -21,7 +21,8 @@ VALID_FLAGS = {
     "et" : "experimenttime",
     "wp" : "writeprobability",
     "rpt" : "repeattimes",
-    "nt" : "numthreads"
+    "nt" : "numthreads",
+    "s" : "servers"
 }
 
 VALID_PARAMETERS = {

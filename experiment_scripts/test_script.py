@@ -99,7 +99,7 @@ def execute_experiment_plan(commands, inputs):
         for rpt in range(repeat_time):
             print("Processing {} of {}...".format(experiment_id + 1, total_n_exp))
             params = ''.join(cmd[0])
-            filename = "{}{}".format(EXPERIMENT_OUTPUT_FILE_NAME, experiment_id)
+            filename = "{}{:04d}".format(EXPERIMENT_OUTPUT_FILE_NAME, experiment_id)
             if not os.path.exists(EXPERIMENT_REST_PATH + current_date):
                 os.makedirs(EXPERIMENT_REST_PATH + current_date)
             dotnet_command = "dotnet run -- {} >{}".format(params, EXPERIMENT_REST_PATH + current_date + '/' + filename)

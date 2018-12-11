@@ -120,10 +120,10 @@ def process_results(experiment_result_path, result_name, log_path, experiment_id
     r_figure_name = EXPERIMENT_FIGURE_NAME + "_r_{0:04d}".format(experiment_id)
     f_figure_name = EXPERIMENT_FIGURE_NAME + "_f_{0:04d}".format(experiment_id)
 
-    report_command = "python3 {}report.py <{} >{}".format(PROCESSING_FAILURES_SCRIPT_PATH, exp_out, exp_rpt)
-    plot_read_command = "python3 {}plot.py r {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + r_figure_name, exp_out)
-    plot_write_command = "python3 {}plot.py w {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + w_figure_name, exp_out)
-    failure_plot_command = "python3 {}failure_plot.py {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + f_figure_name, exp_out)
+    report_command = "python {}report.py <{} >{}".format(PROCESSING_FAILURES_SCRIPT_PATH, exp_out, exp_rpt)
+    plot_read_command = "python {}plot.py r {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + r_figure_name, exp_out)
+    plot_write_command = "python {}plot.py w {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + w_figure_name, exp_out)
+    failure_plot_command = "python {}failure_plot.py {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + f_figure_name, exp_out)
 
     processing_cmds = [report_command, plot_read_command, plot_write_command, failure_plot_command]
 

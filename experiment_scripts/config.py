@@ -4,9 +4,11 @@ EXPERIMENT_LOG_PATH = "../experiment_scripts/experiment_plan/"
 EXPERIMENT_INPUT_FILE_NAME = "exp_input"
 EXPERIMENT_HISTORY_FILE_NAME = "exp_hist"
 EXPERIMENT_OUTPUT_FILE_NAME = "exp_out"
+EXPERIMENT_REPORT_FILE_NAME = "exp_rpt"
+EXPERIMENT_FIGURE_NAME = "plt"
 PROCESSING_FAILURES_SCRIPT_PATH = "../processing/failures/"
-PROCESSING_FAILURES_INPUT_PATH = "../experiment_scripts/test_rest/"
-PROCESSING_FAILURES_RESULT_PATH = "../experiment_scripts/processed_rest/"
+# PROCESSING_FAILURES_INPUT_PATH = "../experiment_scripts/test_rest/"
+# PROCESSING_FAILURES_RESULT_PATH = "../experiment_scripts/processed_rest/"
 
 
 VALID_FLAGS = {

@@ -99,24 +99,39 @@ def execute_experiment_plan(commands, inputs):
         for rpt in range(repeat_time):
             print("Processing {} of {}...".format(experiment_id + 1, total_n_exp))
             params = ''.join(cmd[0])
-            filename = "{}{:04d}".format(EXPERIMENT_OUTPUT_FILE_NAME, experiment_id)
+            result_name = "{}_{:04d}".format(EXPERIMENT_OUTPUT_FILE_NAME, experiment_id)
             if not os.path.exists(EXPERIMENT_REST_PATH + current_date):
                 os.makedirs(EXPERIMENT_REST_PATH + current_date)
-            dotnet_command = "dotnet run -- {} >{}".format(params, EXPERIMENT_REST_PATH + current_date + '/' + filename)
+            experiment_result_path = EXPERIMENT_REST_PATH + current_date + '/'
+            dotnet_command = "dotnet run -- {} >{}".format(params, experiment_result_path + result_name)
+            
             write_to_log(EXPERIMENT_LOG_PATH + exp_hist, dotnet_command)
             os.system(dotnet_command)
-            process_results(filename)
+            write_to_log(EXPERIMENT_LOG_PATH + exp_hist, "Success!")
+            
+            process_results(experiment_result_path, result_name, EXPERIMENT_LOG_PATH + exp_hist, experiment_id)
             experiment_id += 1
 
-def process_results(filename):
-    report_command = "python  {}report.py < {} >{}".format(PROCESSING_FAILURES_SCRIPT_PATH, PROCESSING_FAILURES_INPUT_PATH + filename, PROCESSING_FAILURES_RESULT_PATH + filename)
-    plot_read_command = "python  {}plot.py r {}< {}".format(PROCESSING_FAILURES_SCRIPT_PATH, filename, PROCESSING_FAILURES_INPUT_PATH + filename)
-    plot_write_command = "python  {}plot.py  w {}< {}".format(PROCESSING_FAILURES_SCRIPT_PATH, filename, PROCESSING_FAILURES_INPUT_PATH + filename)
-    failure_plot_command = "python  {}failure_plot.py {}< {}".format(PROCESSING_FAILURES_SCRIPT_PATH, filename, PROCESSING_FAILURES_INPUT_PATH + filename)
-    os.system(report_command)
-    os.system(plot_read_command)
-    os.system(plot_write_command)
-    os.system(failure_plot_command)
+def process_results(experiment_result_path, result_name, log_path, experiment_id):
+    exp_out = experiment_result_path + result_name
+    report_name = EXPERIMENT_REPORT_FILE_NAME + "_{0:04d}".format(experiment_id)
+    exp_rpt = experiment_result_path + report_name
+    w_figure_name = EXPERIMENT_FIGURE_NAME + "_w_{0:04d}".format(experiment_id)
+    r_figure_name = EXPERIMENT_FIGURE_NAME + "_r_{0:04d}".format(experiment_id)
+    f_figure_name = EXPERIMENT_FIGURE_NAME + "_f_{0:04d}".format(experiment_id)
+
+    report_command = "python3 {}report.py <{} >{}".format(PROCESSING_FAILURES_SCRIPT_PATH, exp_out, exp_rpt)
+    plot_read_command = "python3 {}plot.py r {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + r_figure_name, exp_out)
+    plot_write_command = "python3 {}plot.py w {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + w_figure_name, exp_out)
+    failure_plot_command = "python3 {}failure_plot.py {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + f_figure_name, exp_out)
+
+    processing_cmds = [report_command, plot_read_command, plot_write_command, failure_plot_command]
+
+    for cmd in processing_cmds:
+        write_to_log(log_path, cmd)
+        os.system(cmd)
+        write_to_log(log_path, "Success!")
+
 
 def write_to_log(path_to_log, content):
     f = open(path_to_log, "a+")

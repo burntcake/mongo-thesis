@@ -92,8 +92,8 @@ while True:
 
 	
 
-print(docs_missing_writes)
-print(start_time)
+# print(docs_missing_writes)
+# print(start_time)
 start_time = start_time//1000
 finish_time = ops[-1][-1]//1000
 dur = finish_time - start_time
@@ -115,4 +115,4 @@ y2 = [error_count[i] for i in x]
 plt.plot(x,y)
 plt.xlabel("Time of experiment (in seconds)")
 plt.ylabel("Number of writes lost")
-plt.savefig("{}{}_graph.png".format(PROCESSING_FAILURES_RESULT_PATH, argv[1]))
+plt.savefig("{}.png".format(argv[1]))

@@ -65,4 +65,4 @@ plt.ylabel("Latency of {} (in milliseconds)".format(text))
 plt.legend()
 
 #plt.show()
-plt.savefig("{}{}_plot_{}.png".format(PROCESSING_FAILURES_RESULT_PATH, argv[2], argv[1]))
+plt.savefig("{}.png".format(argv[2]))

@@ -345,8 +345,15 @@ processing/kdur/diff\.png
 processing/kdur/latencies\.pgf
 
 processing/kdur/latencies\.png
+experiment_scripts/.idea/workspace.xml
+experiment_scripts/.idea/misc.xml
+experiment_scripts/.idea/experiment_scripts.iml
+experiment_scripts/.idea/workspace.xml
+experiment_scripts/.idea/experiment_scripts.iml
+*.xml
+*.iml
 
-experiment_scripts/\.idea/
+*.png
 
 experiment_scripts/__pycache__/
 
@@ -356,6 +363,8 @@ experiment_scripts/test_rest/
 
 processing/failures/__pycache__/
 
+experiment_scripts/\.idea/
+
 experiment_scripts/primary
 
 experiments/journaled
@@ -363,5 +372,4 @@ experiments/journaled
 experiments/majority
 
 experiments/primary
-
-processing/kdur/readpreferenceprimary_readconcernlocal\.png
+*.pyc

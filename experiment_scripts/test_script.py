@@ -2,21 +2,19 @@ import os
 import pprint as pp
 import re
 from config import *
+import datetime
 
 
 def collect_experiment_plan():
     print("1. Enter/Paste your experiment settings\n" +
           "2. IMPORTANT! Please add a new line at the end\n"+
           "3. Command-D (MACOS), Ctrl-D or Ctrl-Z (Windows) to save it")
-
     print("\nExample of a valid experiment setting:" )
     print("w0,r2,f1,wp0.7,rpt10")
-
     print("\nValid Flags")
     pp.pprint(VALID_FLAGS)
     print("\nValid Parameters")
     pp.pprint(VALID_PARAMETERS)
-
     print("\nEnter your settings:")
 
     contents = []
@@ -36,6 +34,7 @@ def collect_experiment_plan():
 
 def generate_command(content):
     commands = []
+
     for line in content:
         items = re.split(',|\n',line)
         command_args = []
@@ -78,20 +77,33 @@ def generate_command(content):
     return commands
 
 
-def execute_experiment_plan(commands):
+def execute_experiment_plan(commands, inputs):
     os.chdir(EXPERIMENT_SCRIPT_PATH)
     experiment_id = 0
     total_n_exp = 0
+    current_date = str(datetime.datetime.now().strftime("%Y-%m-%d_%Hh%Mm%Ss"))
+    input_log = current_date + "_" + EXPERIMENT_INPUT_FILE_NAME
+    exp_hist = current_date + "_" + EXPERIMENT_HISTORY_FILE_NAME
+
+    # record user inputs
+    for line in inputs:
+        write_to_log(EXPERIMENT_LOG_PATH + input_log, line)
+
+    # compute total number of experiment plans
     for cmd in commands:
         total_n_exp += int(cmd[1])
 
+    # execute experiment plan
     for cmd in commands:
         repeat_time = cmd[1]
-        for i in range(repeat_time):
+        for rpt in range(repeat_time):
             print("Processing {} of {}...".format(experiment_id + 1, total_n_exp))
             params = ''.join(cmd[0])
-            filename = "exp_{0:04d}".format(experiment_id)
-            dotnet_command = "dotnet run -- {} {}".format(params, INDRECT_DIR + filename)
+            filename = "{}{:04d}".format(EXPERIMENT_OUTPUT_FILE_NAME, experiment_id)
+            if not os.path.exists(EXPERIMENT_REST_PATH + current_date):
+                os.makedirs(EXPERIMENT_REST_PATH + current_date)
+            dotnet_command = "dotnet run -- {} >{}".format(params, EXPERIMENT_REST_PATH + current_date + '/' + filename)
+            write_to_log(EXPERIMENT_LOG_PATH + exp_hist, dotnet_command)
             os.system(dotnet_command)
             process_results(filename)
             experiment_id += 1
@@ -106,13 +118,36 @@ def process_results(filename):
     os.system(plot_write_command)
     os.system(failure_plot_command)
 
+def write_to_log(path_to_log, content):
+    f = open(path_to_log, "a+")
+    f.write(str(content)+ "\r\n")
+    f.close()
+
+
+def make_experiment_dir():
+    exp_dirs = [EXPERIMENT_REST_PATH, EXPERIMENT_LOG_PATH]
+
+    for dir in exp_dirs:
+        test_dir = "./" + dir
+        if not os.path.exists(test_dir):
+            os.makedirs(test_dir)
+            print(test_dir + " --- directory created")
+        else:
+            print(test_dir + " --- directory exists")
+
+    print("Directory check complete!")
+
+
 def experiment_engine():
+    # create output directories
+    make_experiment_dir()
+
     # ask for flags and parameters for each experiment
     inputs = collect_experiment_plan()
     commands = generate_command(inputs)
     print("Experiments start:")
     os.chdir(EXPERIMENT_SCRIPT_PATH)
-    execute_experiment_plan(commands)
+    execute_experiment_plan(commands, inputs)
 
 
 if __name__ == '__main__':

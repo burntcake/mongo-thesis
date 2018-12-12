@@ -373,3 +373,8 @@ experiments/majority
 
 experiments/primary
 *.pyc
+experiment_scripts/experiment_plan/
+
+experiment_scripts/experiment_result/
+
+

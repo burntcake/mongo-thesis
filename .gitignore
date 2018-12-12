@@ -359,7 +359,9 @@ experiment_scripts/__pycache__/
 
 experiment_scripts/processed_rest/
 
-experiment_scripts/test_rest/
+experiment_scripts/experiment_plan/
+
+experiment_scripts/experiment_result/
 
 processing/failures/__pycache__/
 

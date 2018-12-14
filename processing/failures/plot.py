@@ -41,7 +41,6 @@ while True:
 
 
 x = sorted(list(rlatencies.keys()))
-
 if read:
 #	latY = [len(rlatencies[i]) for i in x]
 	latY = [min(2000,sum(rlatencies[i])/(len(rlatencies[i])+1)) for i in x]
@@ -50,7 +49,6 @@ else:
 	#latY = [len(wlatencies[i]) for i in x]
 	latY = [min(2000, sum(wlatencies[i])/(len(wlatencies[i])+1)) for i in x]
 x = [t - x[0] for t in x]
-
 t = [i for i in latY if i != 2000]
 avg = sum(t)/len(t)
 avgY = [avg for i in x]

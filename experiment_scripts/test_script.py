@@ -3,6 +3,8 @@ import pprint as pp
 import re
 from config import *
 import datetime
+import pandas
+import glob
 
 
 def collect_experiment_plan():
@@ -82,7 +84,8 @@ def generate_command(content):
                     command_parameter = param
 
             if command_flag is not None and command_parameter is not None:
-                command_args.append("--" + command_flag + " " + command_parameter + " ")
+                # command_args.append("--" + command_flag + " " + command_parameter + " ")
+                command_args.append([command_flag, command_parameter])
 
         if len(command_args) > 0:
             commands.append([command_args, repeat_time])
@@ -91,6 +94,7 @@ def generate_command(content):
 
 
 def execute_experiment_plan(commands, inputs):
+    ops = {}
     os.chdir(EXPERIMENT_SCRIPT_PATH)
     experiment_id = 0
     total_n_exp = 0
@@ -111,7 +115,19 @@ def execute_experiment_plan(commands, inputs):
         repeat_time = cmd[1]
         for rpt in range(repeat_time):
             print("Processing {} of {}...".format(experiment_id + 1, total_n_exp))
-            params = ''.join(cmd[0])
+            params = ''
+            experiment_op = {}
+
+            for param in cmd[0]:
+                short_flag = param[0]
+                command_parameter = param[1]
+                complete_command = "--" + short_flag + " " + command_parameter + " "
+                params += complete_command
+                experiment_op[short_flag] = command_parameter
+
+            # for result summary
+            ops[experiment_id] = experiment_op
+
             result_name = "{}_{:04d}".format(EXPERIMENT_OUTPUT_FILE_NAME, experiment_id)
             if not os.path.exists(EXPERIMENT_REST_PATH + current_date):
                 os.makedirs(EXPERIMENT_REST_PATH + current_date)
@@ -125,6 +141,9 @@ def execute_experiment_plan(commands, inputs):
             process_results(experiment_result_path, result_name, EXPERIMENT_LOG_PATH + exp_hist, experiment_id)
             experiment_id += 1
 
+    return experiment_result_path, ops
+
+
 def process_results(experiment_result_path, result_name, log_path, experiment_id):
     exp_out = experiment_result_path + result_name
     report_name = EXPERIMENT_REPORT_FILE_NAME + "_{0:04d}".format(experiment_id)
@@ -133,10 +152,18 @@ def process_results(experiment_result_path, result_name, log_path, experiment_id
     r_figure_name = EXPERIMENT_FIGURE_NAME + "_r_{0:04d}".format(experiment_id)
     f_figure_name = EXPERIMENT_FIGURE_NAME + "_f_{0:04d}".format(experiment_id)
 
-    report_command = "python3 {}report.py <{} >{}".format(PROCESSING_FAILURES_SCRIPT_PATH, exp_out, exp_rpt)
-    plot_read_command = "python3 {}plot.py r {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + r_figure_name, exp_out)
-    plot_write_command = "python3 {}plot.py w {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + w_figure_name, exp_out)
-    failure_plot_command = "python3 {}failure_plot.py {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH, experiment_result_path + f_figure_name, exp_out)
+    report_command = "python3 {}report.py <{} >{}".format(PROCESSING_FAILURES_SCRIPT_PATH,
+                                                          exp_out,
+                                                          exp_rpt)
+    plot_read_command = "python3 {}plot.py r {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH,
+                                                            experiment_result_path + r_figure_name,
+                                                            exp_out)
+    plot_write_command = "python3 {}plot.py w {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH,
+                                                             experiment_result_path + w_figure_name,
+                                                             exp_out)
+    failure_plot_command = "python3 {}failure_plot.py {} <{}".format(PROCESSING_FAILURES_SCRIPT_PATH,
+                                                                     experiment_result_path + f_figure_name,
+                                                                     exp_out)
 
     processing_cmds = [report_command, plot_read_command, plot_write_command, failure_plot_command]
 
@@ -150,6 +177,44 @@ def write_to_log(path_to_log, content):
     f = open(path_to_log, "a+")
     f.write(str(content)+ "\r\n")
     f.close()
+
+
+def summarize_results(output_path, ops):
+    # pp.pprint(ops)
+    cols = list(RESULT_SUMMARY_DICT.values())
+    cols.extend(RESULT_VALUES)
+    statistic_df = pandas.DataFrame(index=ops.keys(), columns=cols)
+
+    # record configurations
+    for exp_id in ops.keys():
+        op = ops[exp_id]
+        flags = op.keys()
+        df_dict = {}
+        for flag in flags:
+            if flag in RESULT_SUMMARY_DICT.keys():
+                target_header = RESULT_SUMMARY_DICT[flag]
+                val = op[flag]
+                df_dict[target_header] = val
+        statistic_df.loc[exp_id] = df_dict
+
+    # get experiment files
+    report_file_names = glob.glob(output_path + "exp_rpt_*")
+
+    for file_path in report_file_names:
+        file_name = file_path.split("/")[-1]
+        target_index = int(re.findall(r'-?\d+\.?\d*', file_name)[0])
+        print("t", target_index)
+        with open(file_path) as f:
+            for measurement in RESULT_VALUES:
+                content = f.readline()
+                statistic_df.loc[target_index, measurement] = int(re.findall(r'-?\d+\.?\d*', content)[0])
+
+    print(report_file_names)
+
+    # record numbers
+    statistic_df.to_csv(output_path + EXPERIMENT_SUMMARY_FILE_NAME)
+
+    return
 
 
 def make_experiment_dir():
@@ -175,7 +240,8 @@ def experiment_engine():
     commands = generate_command(inputs)
     print("Experiments start:")
     os.chdir(EXPERIMENT_SCRIPT_PATH)
-    execute_experiment_plan(commands, inputs)
+    experiment_result_path, ops = execute_experiment_plan(commands, inputs)
+    summarize_results(experiment_result_path, ops)
 
 
 if __name__ == '__main__':

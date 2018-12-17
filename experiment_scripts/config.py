@@ -5,6 +5,7 @@ EXPERIMENT_INPUT_FILE_NAME = "exp_input"
 EXPERIMENT_HISTORY_FILE_NAME = "exp_hist"
 EXPERIMENT_OUTPUT_FILE_NAME = "exp_out"
 EXPERIMENT_REPORT_FILE_NAME = "exp_rpt"
+EXPERIMENT_SUMMARY_FILE_NAME = "exp_summary.csv"
 EXPERIMENT_FIGURE_NAME = "plt"
 PROCESSING_FAILURES_SCRIPT_PATH = "../processing/failures/"
 # PROCESSING_FAILURES_INPUT_PATH = "../experiment_scripts/test_rest/"
@@ -16,7 +17,7 @@ VALID_FLAGS = {
     "r" : "readconcern",
     "w" : "writeconcern",
     "f" : "failure",
-    "tc" : "testCollection",
+    "tc" : "testcollection",
     "t" : "test",
     "et" : "experimenttime",
     "wp" : "writeprobability",
@@ -42,3 +43,16 @@ VALID_PARAMETERS = {
         "2" : "EatMyData",
         "3" : "NoFailure"}
 }
+
+RESULT_SUMMARY_DICT = {
+    "readpreference" : "Read Preference",
+    "readconcern" : "Read Concern",
+    "writeconcern" : "Write Concern",
+    "failure" : "Failure",
+    "experimenttime" : "Experiment Time",
+    "writeprobability" : "Write Probability",
+    "numthreads" : "Num threads",
+    "servers" : "Servers"
+}
+
+RESULT_VALUES = ["Throughput", "Errors", "Missing Writes"]

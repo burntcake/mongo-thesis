@@ -60,4 +60,4 @@ plt.plot(x, w1_cum, label="Primary write concern")
 plt.plot(x, kd_cum, label="Estimated as durable")
 plt.legend()
 
-plt.savefig("cum.png")
+plt.savefig("{}cum.png".format(argv[3]))

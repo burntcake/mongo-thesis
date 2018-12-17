@@ -61,4 +61,4 @@ plt.xlabel("Latency (in milliseconds)")
 plt.plot(x, diff)
 plt.legend()
 
-plt.savefig("diff.png")
+plt.savefig("{}diff.png".format(argv[3]))

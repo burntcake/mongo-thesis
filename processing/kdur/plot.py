@@ -24,27 +24,32 @@ def getCounts(f):
 	return counts
 print(argv[1])
 print(argv[2])
-print(argv[3])
 w1 = open(argv[1])
 w1j = open(argv[2])
-w1m = open(argv[3])
 
 w1_c = getCounts(w1)
 w1j_c = getCounts(w1j)
-w1m_c = getCounts(w1m)
+
 
 x = range(1,1000)
 
 y1 = [w1_c[i] for i in x]
 y2 = [w1j_c[i] for i in x]
-y3 = [w1m_c[i] for i in x]
 
 plt.plot(x, y1, label="Primary write concern")
 plt.plot(x, y2, label="Journaled write concern")
-plt.plot(x, y3, label="Majority write concern")
+
+format = argv[3]
+if len(argv) > 4:
+	w1m = open(argv[3])
+	w1m_c = getCounts(w1m)
+	y3 = [w1m_c[i] for i in x]
+	plt.plot(x, y3, label="Majority write concern")
+	format = argv[4]
 
 plt.ylabel("Number of operations")
 plt.xlabel("Latency (in milliseconds)")
 plt.legend()
 
-plt.savefig("latencies.png")
+
+plt.savefig("{}latencies.png".format(format))

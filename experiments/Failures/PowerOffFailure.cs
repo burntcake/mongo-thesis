@@ -8,24 +8,24 @@ namespace MongoDBExperiments.Failures
     public class PowerOffFailure : IFailure
     {
         private readonly IMongoDatabase db;
-        private readonly VirtualBox vbox;
+        private readonly EC2Client client;
         private string shutdownvm;
 
-        public PowerOffFailure(IMongoDatabase db, VirtualBox vbox)
+        public PowerOffFailure(IMongoDatabase db, EC2Client client)
         {
             this.db = db;
-            this.vbox = vbox;
+            this.client = client;
         }
 
         public void FixAsync()
         {
-            this.vbox.StartVM(this.shutdownvm);
+            this.client.startVm(shutdownvm);
         }
 
         public void InduceAsync()
         {
             this.shutdownvm = this.db.GetPrimaryReplica();
-            this.vbox.ControlVM(this.shutdownvm, "poweroff");
+            this.client.terminateVM(this.shutdownvm);
         }
     }
 }

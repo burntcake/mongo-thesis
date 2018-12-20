@@ -9,26 +9,26 @@ namespace MongoDBExperiments.Failures
     public class ShutDownFailure : IFailure
     {
         private readonly IMongoDatabase db;
-        private readonly VirtualBox vbox;
+        private readonly EC2Client client;
 
         private string shutdownvm;
 
-        public ShutDownFailure(IMongoDatabase db, VirtualBox vbox)
+        public ShutDownFailure(IMongoDatabase db, EC2Client client)
         {
             this.db = db;
-            this.vbox = vbox;
+            this.client = client;
         }
 
         public void FixAsync()
         {
-            this.vbox.StartVM(this.shutdownvm);
+            this.client.startVm(this.shutdownvm);
         }
 
         public void InduceAsync()
         {
             this.shutdownvm = this.db.GetPrimaryReplica();
 
-            this.vbox.ControlVM(this.shutdownvm, "acpipowerbutton");
+            this.client.stopVm(this.shutdownvm);
         }
     }
 }

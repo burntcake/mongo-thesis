@@ -5,11 +5,7 @@ from botocore.exceptions import ClientError
 
 instance_id = sys.argv[1]
 
-ec2 = boto3.client(
-    'ec2',
-    aws_access_key_id= "AKIAJGXBXJ2SNAVVJPUQ",
-    aws_secret_access_key= "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",
-                   )
+ec2 = boto3.client('ec2')
 
 # Do a dryrun first to verify permissions
 try:

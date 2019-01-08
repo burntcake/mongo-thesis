@@ -5,8 +5,8 @@ from botocore.exceptions import ClientError
 
 instance_id = sys.argv[2]
 action = sys.argv[1].upper()
-
-ec2 = boto3.client('ec2')
+region = sys.argv[3]
+ec2 = boto3.client('ec2', region_name = region)
 
 if action == 'ON':
     # Do a dryrun first to verify permissions

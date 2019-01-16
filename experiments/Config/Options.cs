@@ -23,7 +23,7 @@ namespace MongoDBExperiments.Config
         [Option(Default = "test", HelpText = "Database to use for this experiment")]
         public string Database { get; set; }
 
-        [Option(Default = "rs0", HelpText = "The Replica Set name used in the mongo servers")]
+        [Option(Default = "s0", HelpText = "The Replica Set name used in the mongo servers")]
         public string ReplicaSet { get; set; }
 
         [Option(Default = 8)]

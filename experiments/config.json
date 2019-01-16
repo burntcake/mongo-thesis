@@ -6,7 +6,7 @@
             "mongo3"
         ],
 
-        "replicaSet": "rs0",
+        "replicaSet": "s0",
 
         "database":  "test",
         "collection":  "testCollection"

@@ -23,7 +23,7 @@ namespace MongoDBExperiments.Config
         [Option(Default = "test", HelpText = "Database to use for this experiment")]
         public string Database { get; set; }
 
-        [Option(Default = "rs0", HelpText = "The Replica Set name used in the mongo servers")]
+        [Option(Default = "s0", HelpText = "The Replica Set name used in the mongo servers")]
         public string ReplicaSet { get; set; }
 
         [Option(Default = 8)]
@@ -41,7 +41,7 @@ namespace MongoDBExperiments.Config
         [Option(Default = 60, HelpText = "The time this experiment will run for (in seconds)")]
         public int ExperimentTime { get; set; }
 
-        [Option(Default = new string[] { "mongo1", "mongo2", "mongo3" }, HelpText = "List of mongo servers")]
+        [Option(Default = new string[] { "10.0.9.221", "10.0.61.165", "10.0.61.165" }, HelpText = "List of mongo servers")]
         public IEnumerable<string> Servers { get; set; }
         
     }

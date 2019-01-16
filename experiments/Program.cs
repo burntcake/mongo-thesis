@@ -67,6 +67,7 @@ namespace MongoDBExperiments
                 .AsSelf();
 
             var config = new ConfigManager(options);
+            Console.WriteLine(options.ReplicaSet);
             builder.RegisterType(config.GetFailureType()).As<IFailure>();
 
             // Set up DB connection

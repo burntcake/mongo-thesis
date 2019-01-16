@@ -68,6 +68,7 @@ namespace MongoDBExperiments
 
             var config = new ConfigManager(options);
             Console.WriteLine(options.ReplicaSet);
+            Console.WriteLine(options.Servers);
             builder.RegisterType(config.GetFailureType()).As<IFailure>();
 
             // Set up DB connection

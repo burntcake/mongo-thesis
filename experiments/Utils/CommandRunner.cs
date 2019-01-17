@@ -8,8 +8,6 @@ namespace MongoDBExperiments.Utils
     {
         public void Run(string cmd, string args)
         {
-            Console.WriteLine(cmd);
-            Console.WriteLine(args);
             var proc = new Process
             {
                 StartInfo = new ProcessStartInfo

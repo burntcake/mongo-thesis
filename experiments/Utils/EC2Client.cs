@@ -15,15 +15,15 @@ namespace MongoDBExperiments.Utils
         }
         public void startVm(string instance_id)
         {
-            runner.Run("StartStop.py", $"ON {instance_id}");
+            runner.Run("python3", $"StartStop.py ON {instance_id}");
         }
         public void stopVm(string instance_id)
         {
-            runner.Run("StartStop.py", $"OFF {instance_id}");
+            runner.Run("python3", $"StartStop.py OFF {instance_id}");
         }
         public void terminateVM(string instance_id)
         {
-            runner.Run("TerminateEC2Instance.py", $"{instance_id}");
+            runner.Run("python3", $"TerminateEC2Instance.py {instance_id}");
         }
 
     }

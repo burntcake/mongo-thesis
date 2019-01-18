@@ -237,6 +237,7 @@ def start_instances():
     mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
                             AWS_INSTANCE_ID_LIST)
     mongo.start_all()
+    print("\nAll instance started\n")
 
 
 def stop_instances():
@@ -244,6 +245,7 @@ def stop_instances():
     mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
                             AWS_INSTANCE_ID_LIST)
     mongo.stop_all()
+    print("\nAll instance stopped\n")
 
 
 def experiment_engine():

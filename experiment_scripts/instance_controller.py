@@ -1,6 +1,8 @@
 import boto3
 from botocore.exceptions import ClientError
 from config import *
+import os
+
 
 class MongoReplicaSet:
     def __init__(self, instance_type, region_name, instance_id_list):
@@ -9,7 +11,7 @@ class MongoReplicaSet:
         self.instance_id_list = instance_id_list
 
     def get_credential(self):
-        with open(AWS_CREDENTIAL) as f:
+        with open(os.path.expanduser(AWS_CREDENTIAL)) as f:
             content = f.readlines()
         lines = [x.strip() for x in content]
         key = lines[1].split("=")[1]

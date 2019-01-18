@@ -23,7 +23,7 @@ namespace MongoDBExperiments.Utils
         }
         public void terminateVM(string instance_id)
         {
-            //runner.Run("python3", $"TerminateEC2Instance.py {instance_id}");
+            runner.Run("python3", $"PowerOff.py {instance_id}");
         }
 
     }

@@ -29,9 +29,6 @@ class MongoReplicaSet:
 
             try:
                 response = self.client.start_instances(InstanceIds=[instance_id], DryRun=False)
-                print("Wait for 90 seconds")
-                time.sleep(90)
-                print("Continue the experiment")
                 print(response)
 
             except ClientError as e:

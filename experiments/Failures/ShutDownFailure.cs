@@ -15,9 +15,9 @@ namespace MongoDBExperiments.Failures
         private string shutdownvm;
         IDictionary<string, string> ec2InstanceId = new Dictionary<string, string>()
         {
-            {"10.0.9.221", "i-0c292c6704cadd30c" },
-            {"10.0.61.165", "i-00f83aff5af3fc9bd"},
-            { "10.0.71.254", "i-0dca5b5dedac86a43"}
+            {"10.0.70.152", "i-02c28668c91630b9e" },
+            {"10.0.21.232", "i-04e936fe73b7e4e9d"},
+            { "10.0.50.226", "i-0a2540339b0b61499"}
         };
         
         public ShutDownFailure(IMongoDatabase db, EC2Client client)

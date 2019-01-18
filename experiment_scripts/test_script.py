@@ -5,6 +5,7 @@ from config import *
 import datetime
 import pandas
 import glob
+from instance_controller import *
 
 
 def collect_experiment_plan():
@@ -231,6 +232,20 @@ def make_experiment_dir():
     print("Directory check complete!")
 
 
+def start_instances():
+    print("Starting all instances")
+    mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
+                            AWS_INSTANCE_ID_LIST)
+    mongo.start_all()
+
+
+def stop_instances():
+    print("All task finished, stopping all instances")
+    mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
+                            AWS_INSTANCE_ID_LIST)
+    mongo.stop_all()
+
+
 def experiment_engine():
     # create output directories
     make_experiment_dir()
@@ -239,9 +254,11 @@ def experiment_engine():
     inputs = collect_experiment_plan()
     commands = generate_command(inputs)
     print("Experiments start:")
+    start_instances()
     os.chdir(EXPERIMENT_SCRIPT_PATH)
     experiment_result_path, ops = execute_experiment_plan(commands, inputs)
     summarize_results(experiment_result_path, ops)
+    stop_instances()
 
 
 if __name__ == '__main__':

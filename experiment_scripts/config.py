@@ -8,6 +8,10 @@ EXPERIMENT_REPORT_FILE_NAME = "exp_rpt"
 EXPERIMENT_SUMMARY_FILE_NAME = "exp_summary.csv"
 EXPERIMENT_FIGURE_NAME = "plt"
 PROCESSING_FAILURES_SCRIPT_PATH = "../processing/failures/"
+AWS_CREDENTIAL = "~/.aws/credentials"
+AWS_RESOURCE_TYPE = "ec2"
+AWS_REGION_NAME = "ap-southeast-2"
+AWS_INSTANCE_ID_LIST = ["i-0c292c6704cadd30c", "i-00f83aff5af3fc9bd", "i-0dca5b5dedac86a43"]
 # PROCESSING_FAILURES_INPUT_PATH = "../experiment_scripts/test_rest/"
 # PROCESSING_FAILURES_RESULT_PATH = "../experiment_scripts/processed_rest/"
 

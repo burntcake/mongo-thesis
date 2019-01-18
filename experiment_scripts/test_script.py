@@ -6,7 +6,7 @@ import datetime
 import pandas
 import glob
 from instance_controller import *
-
+import time
 
 def collect_experiment_plan():
     print("1. Enter/Paste your experiment settings\n" +

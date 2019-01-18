@@ -2,6 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 from config import *
 import os
+import time
 
 
 class MongoReplicaSet:
@@ -26,10 +27,13 @@ class MongoReplicaSet:
                 if 'DryRunOperation' not in str(e):
                     raise
 
-                # Dry run succeeded, run start_instances without dryrun
             try:
                 response = self.client.start_instances(InstanceIds=[instance_id], DryRun=False)
+                print("Wait for 90 seconds")
+                time.sleep(90)
+                print("Continue the experiment")
                 print(response)
+
             except ClientError as e:
                 print(e)
 

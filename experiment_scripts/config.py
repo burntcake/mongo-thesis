@@ -12,9 +12,6 @@ AWS_CREDENTIAL = "~/.aws/credentials"
 AWS_RESOURCE_TYPE = "ec2"
 AWS_REGION_NAME = "ap-southeast-2"
 AWS_INSTANCE_ID_LIST = ["i-04e936fe73b7e4e9d", "i-02c28668c91630b9e", "i-0a2540339b0b61499"]
-# PROCESSING_FAILURES_INPUT_PATH = "../experiment_scripts/test_rest/"
-# PROCESSING_FAILURES_RESULT_PATH = "../experiment_scripts/processed_rest/"
-
 
 VALID_FLAGS = {
     "p" : "readpreference",

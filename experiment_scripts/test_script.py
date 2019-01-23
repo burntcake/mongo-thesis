@@ -8,6 +8,8 @@ import glob
 from instance_controller import *
 import time
 
+
+# Collect simplified commands
 def collect_experiment_plan():
     print("1. Enter/Paste your experiment settings\n" +
           "2. IMPORTANT! Please add a new line at the end\n"+
@@ -34,7 +36,7 @@ def collect_experiment_plan():
 
     return contents
 
-
+# translate the simplified command to original command
 def generate_command(content):
     commands = []
 
@@ -94,6 +96,7 @@ def generate_command(content):
     return commands
 
 
+# run the experiment
 def execute_experiment_plan(commands, inputs):
     ops = {}
     os.chdir(EXPERIMENT_SCRIPT_PATH)
@@ -145,6 +148,7 @@ def execute_experiment_plan(commands, inputs):
     return experiment_result_path, ops
 
 
+# plot figures based on experiment ressult
 def process_results(experiment_result_path, result_name, log_path, experiment_id):
     exp_out = experiment_result_path + result_name
     report_name = EXPERIMENT_REPORT_FILE_NAME + "_{0:04d}".format(experiment_id)
@@ -171,15 +175,17 @@ def process_results(experiment_result_path, result_name, log_path, experiment_id
     for cmd in processing_cmds:
         write_to_log(log_path, cmd)
         os.system(cmd)
-        write_to_log(log_path, "Success!")
+        write_to_log(log_path, "Processed!")
 
 
+# write logs to the log file
 def write_to_log(path_to_log, content):
     f = open(path_to_log, "a+")
     f.write(str(content)+ "\r\n")
     f.close()
 
 
+# summarize experiment results and generate a report in .csv format
 def summarize_results(output_path, ops):
     # pp.pprint(ops)
     cols = list(RESULT_SUMMARY_DICT.values())
@@ -218,6 +224,7 @@ def summarize_results(output_path, ops):
     return
 
 
+# make sure the experiment directories exist
 def make_experiment_dir():
     exp_dirs = [EXPERIMENT_REST_PATH, EXPERIMENT_LOG_PATH]
 
@@ -232,6 +239,7 @@ def make_experiment_dir():
     print("Directory check complete!")
 
 
+# start all aws instances
 def start_instances():
     print("Starting all instances")
     mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
@@ -240,6 +248,7 @@ def start_instances():
     print("\nAll instance started\n")
 
 
+# stop all aws instances
 def stop_instances():
     print("All task finished, stopping all instances")
     mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
@@ -248,18 +257,20 @@ def stop_instances():
     print("\nAll instance stopped\n")
 
 
+# experiment pipeline
 def experiment_engine():
     # create output directories
     make_experiment_dir()
-
     # ask for flags and parameters for each experiment
     inputs = collect_experiment_plan()
     commands = generate_command(inputs)
     print("Experiments start:")
+    # start all aws nodes before the experiment starts
     start_instances()
     os.chdir(EXPERIMENT_SCRIPT_PATH)
     experiment_result_path, ops = execute_experiment_plan(commands, inputs)
     summarize_results(experiment_result_path, ops)
+    # close all instances when the experiment is done
     stop_instances()
 
 

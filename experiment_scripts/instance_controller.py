@@ -5,12 +5,14 @@ import os
 import time
 
 
+# MongoRelicaSet class manages all aws instances which are used in the experiment
 class MongoReplicaSet:
     def __init__(self, instance_type, region_name, instance_id_list):
         key, skey = self.get_credential()
         self.client = boto3.client(instance_type, region_name=region_name, aws_access_key_id=key, aws_secret_access_key=skey)
         self.instance_id_list = instance_id_list
 
+    # get aws access key 
     def get_credential(self):
         with open(os.path.expanduser(AWS_CREDENTIAL)) as f:
             content = f.readlines()
@@ -19,6 +21,7 @@ class MongoReplicaSet:
         skey = lines[2].split("=")[1]
         return key, skey
 
+    # start all aws instances
     def start_all(self):
         for instance_id in self.instance_id_list:
             try:
@@ -34,6 +37,7 @@ class MongoReplicaSet:
             except ClientError as e:
                 print(e)
 
+    # stop all aws instances
     def stop_all(self):
         for instance_id in self.instance_id_list:
             try:

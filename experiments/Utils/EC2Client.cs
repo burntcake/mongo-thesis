@@ -26,7 +26,6 @@ namespace MongoDBExperiments.Utils
         public void stopVm(string server_ip)
         {
             string instance_id;
-            Console.WriteLine(server_ip);
             if (instanceIds.TryGetValue(server_ip, out instance_id))
             {
                 runner.Run("python3", $"StartStop.py OFF {instance_id}");

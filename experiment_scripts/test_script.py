@@ -210,7 +210,7 @@ def summarize_results(output_path, ops):
     for file_path in report_file_names:
         file_name = file_path.split("/")[-1]
         target_index = int(re.findall(r'-?\d+\.?\d*', file_name)[0])
-        print("t", target_index)
+        # print("t", target_index)
         with open(file_path) as f:
             for measurement in RESULT_VALUES:
                 content = f.readline()

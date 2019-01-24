@@ -9,9 +9,25 @@ from instance_controller import *
 import time
 
 
+stop_all = True
+
+
 # Collect simplified commands
 def collect_experiment_plan():
-    print("1. Enter/Paste your experiment settings\n" +
+    global stop_all
+
+    while 1:
+        user_input = input("Stop all nodes after the experiment?(y/n):\n")
+        if user_input.lower() == 'y':
+            stop_all = True
+            break
+        elif user_input.lower() == 'n':
+            stop_all = False
+            break
+        else:
+            print("Invalid input, please try again.")
+
+    print("\n1. Enter/Paste your experiment settings\n" +
           "2. IMPORTANT! Please add a new line at the end\n"+
           "3. Command-D (MACOS), Ctrl-D or Ctrl-Z (Windows) to save it")
     print("\nExample of a valid experiment setting:" )
@@ -35,6 +51,7 @@ def collect_experiment_plan():
             contents.append(line)
 
     return contents
+
 
 # translate the simplified command to original command
 def generate_command(content):
@@ -272,7 +289,8 @@ def experiment_engine():
     experiment_result_path, ops = execute_experiment_plan(commands, inputs)
     summarize_results(experiment_result_path, ops)
     # close all instances when the experiment is done
-    stop_instances()
+    if stop_all:
+        stop_instances()
 
 
 if __name__ == '__main__':

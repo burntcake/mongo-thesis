@@ -79,6 +79,15 @@ namespace MongoDBExperiments
             var collection = db.GetCollection<ExperimentDocument>(options.Collection);
             builder.RegisterInstance(collection).As<IMongoCollection<ExperimentDocument>>();
 
+            var servers = config.GetServers();
+            var instanceIds = config.GetInstanceIds();
+            IDictionary<string, string> ec2InstanceId = new Dictionary<string, string>();
+            foreach(var serversAndInstanceIds in servers.Zip(instanceIds, Tuple.Create))
+            {
+                ec2InstanceId.Add(serversAndInstanceIds.Item1.Host, serversAndInstanceIds.Item2);
+            }
+            builder.RegisterInstance(ec2InstanceId).As<IDictionary<string, string>>();
+
             var container = builder.Build();
 
             Console.Error.WriteLine

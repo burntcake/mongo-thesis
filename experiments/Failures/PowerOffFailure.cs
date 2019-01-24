@@ -10,12 +10,7 @@ namespace MongoDBExperiments.Failures
         private readonly IMongoDatabase db;
         private readonly EC2Client client;
         private string shutdownvm;
-        IDictionary<string, string> ec2InstanceId = new Dictionary<string, string>()
-        {
-            {"10.0.70.152", "i-02c28668c91630b9e" },
-            {"10.0.21.232", "i-04e936fe73b7e4e9d"},
-            { "10.0.50.226", "i-0a2540339b0b61499"}
-        };
+      
         public PowerOffFailure(IMongoDatabase db, EC2Client client)
         {
             this.db = db;
@@ -29,11 +24,7 @@ namespace MongoDBExperiments.Failures
 
         public void InduceAsync()
         {
-            string result;
-            if (ec2InstanceId.TryGetValue(db.GetPrimaryReplica(), out result))
-            {
-                this.shutdownvm = result;
-            }
+            this.shutdownvm = db.GetPrimaryReplica();
             this.client.terminateVM(this.shutdownvm);
         }
     }

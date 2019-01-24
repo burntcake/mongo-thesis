@@ -55,6 +55,13 @@ namespace MongoDBExperiments.Config
             }
         }
 
+        public IEnumerable<string> GetInstanceIds()
+        {
+            foreach (string i in this.opts.InstanceIds)
+            {
+                yield return i;
+            }
+        }
         private MongoDB.Driver.WriteConcern GetWriteConcern()
         {
             switch (this.opts.WriteConcern)

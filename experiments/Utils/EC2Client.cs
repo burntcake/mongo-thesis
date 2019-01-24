@@ -8,23 +8,36 @@ namespace MongoDBExperiments.Utils
     public class EC2Client
     {
         private readonly CommandRunner runner;
-
-        public EC2Client(CommandRunner runner)
+        private IDictionary<string, string> instanceIds;
+        public EC2Client(CommandRunner runner, IDictionary<string, string> instanceIds)
         {
             this.runner = runner;
-        }
-        public void startVm(string instance_id)
-        {
-            runner.Run("python3", $"StartStop.py ON {instance_id}");
-        }
-        public void stopVm(string instance_id)
-        {
-            runner.Run("python3", $"StartStop.py OFF {instance_id}");
-        }
-        public void terminateVM(string instance_id)
-        {
-            runner.Run("python3", $"PowerOff.py {instance_id}");
-        }
+            this.instanceIds = instanceIds;
 
+        }
+        public void startVm(string server_ip)
+        {
+            string instance_id;
+            if (instanceIds.TryGetValue(server_ip, out instance_id))
+            {
+                runner.Run("python3", $"StartStop.py ON {instance_id}");
+            }
+        }
+        public void stopVm(string server_ip)
+        {
+            string instance_id;
+            if (instanceIds.TryGetValue(server_ip, out instance_id))
+            {
+                runner.Run("python3", $"StartStop.py OFF {instance_id}");
+            }
+        }
+        public void terminateVM(string server_ip)
+        {
+            string instance_id;
+            if (instanceIds.TryGetValue(server_ip, out instance_id))
+            {
+                runner.Run("python3", $"PowerOff.py {instance_id}");
+            }
+        }
     }
 }

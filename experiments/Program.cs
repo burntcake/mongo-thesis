@@ -86,7 +86,7 @@ namespace MongoDBExperiments
             {
                 ec2InstanceId.Add(serversAndInstanceIds.Item1.ToString(), serversAndInstanceIds.Item2);
             }
-            Console.WriteLine(ec2InstanceId.ToString());
+            Console.WriteLine(ec2InstanceId.ToJson());
             builder.RegisterInstance(ec2InstanceId).As<IDictionary<string, string>>();
 
             var container = builder.Build();

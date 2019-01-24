@@ -21,6 +21,7 @@ if action == 'ON':
         #print(response)
     except ClientError as e:
         #print(e)
+        print("1")
 else:
     # Do a dryrun first to verify permissions
     try:
@@ -35,3 +36,4 @@ else:
         #print(response)
     except ClientError as e:
         #print(e)
+        print("2")

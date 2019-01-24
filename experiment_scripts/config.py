@@ -24,7 +24,8 @@ VALID_FLAGS = {
     "wp" : "writeprobability",
     "rpt" : "repeattimes",
     "nt" : "numthreads",
-    "s" : "servers"
+    "s" : "servers",
+    "id" : "instanceids"
 }
 
 VALID_PARAMETERS = {

@@ -83,7 +83,7 @@ def generate_command(content):
                 elif short_flag == 'rpt':
                     if int(param) > 0:
                         repeat_time = int(param)
-                elif short_flag == 's':
+                elif short_flag == 's' or short_flag == 'id':
                     command_parameter = param
 
             if command_flag is not None and command_parameter is not None:
@@ -181,7 +181,7 @@ def process_results(experiment_result_path, result_name, log_path, experiment_id
 # write logs to the log file
 def write_to_log(path_to_log, content):
     f = open(path_to_log, "a+")
-    f.write(str(content)+ "\r\n")
+    f.write(str(content) + "\r\n")
     f.close()
 
 

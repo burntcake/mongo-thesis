@@ -268,7 +268,7 @@ def start_instances():
 
 # stop all aws instances
 def stop_instances():
-    print("All task finished, stopping all instances")
+    print("Stopping all instances")
     mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
                             AWS_INSTANCE_ID_LIST)
     mongo.stop_all()
@@ -291,6 +291,7 @@ def experiment_engine():
     # close all instances when the experiment is done
     if stop_all:
         stop_instances()
+    print("All task finished!")
 
 
 if __name__ == '__main__':

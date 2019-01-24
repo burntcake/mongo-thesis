@@ -188,6 +188,7 @@ def write_to_log(path_to_log, content):
 # summarize experiment results and generate a report in .csv format
 def summarize_results(output_path, ops):
     # pp.pprint(ops)
+    print("Generating report...")
     cols = list(RESULT_SUMMARY_DICT.values())
     cols.extend(RESULT_VALUES)
     statistic_df = pandas.DataFrame(index=ops.keys(), columns=cols)
@@ -211,7 +212,7 @@ def summarize_results(output_path, ops):
         file_name = file_path.split("/")[-1]
         target_index = int(re.findall(r'-?\d+\.?\d*', file_name)[0])
         # print("t", target_index)
-        with open(file_path) as f:
+        with open(file_path, encoding='UTF-8') as f:
             for measurement in RESULT_VALUES:
                 content = f.readline()
                 statistic_df.loc[target_index, measurement] = int(re.findall(r'-?\d+\.?\d*', content)[0])

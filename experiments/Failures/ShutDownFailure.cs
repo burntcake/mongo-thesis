@@ -29,12 +29,7 @@ namespace MongoDBExperiments.Failures
 
         public void InduceAsync()
         {
-            string result;
-            if(instanceIds.TryGetValue(db.GetPrimaryReplica(), out result))
-            {
-                this.shutdownvm = result;
-            }
-
+            this.shutdownvm = db.GetPrimaryReplica();
             this.client.stopVm(this.shutdownvm);
         }
     }

@@ -10,13 +10,11 @@ namespace MongoDBExperiments.Failures
         private readonly IMongoDatabase db;
         private readonly EC2Client client;
         private string shutdownvm;
-        private IDictionary<string, string> instanceIds;
       
-        public PowerOffFailure(IMongoDatabase db, EC2Client client, IDictionary<string, string> instanceIds)
+        public PowerOffFailure(IMongoDatabase db, EC2Client client)
         {
             this.db = db;
             this.client = client;
-            this.instanceIds = instanceIds;
         }
 
         public void FixAsync()
@@ -26,11 +24,7 @@ namespace MongoDBExperiments.Failures
 
         public void InduceAsync()
         {
-            string result;
-            if (instanceIds.TryGetValue(db.GetPrimaryReplica(), out result))
-            {
-                this.shutdownvm = result;
-            }
+            this.shutdownvm = db.GetPrimaryReplica();
             this.client.terminateVM(this.shutdownvm);
         }
     }

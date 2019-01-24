@@ -84,7 +84,7 @@ namespace MongoDBExperiments
             IDictionary<string, string> ec2InstanceId = new Dictionary<string, string>();
             foreach(var serversAndInstanceIds in servers.Zip(instanceIds, Tuple.Create))
             {
-                ec2InstanceId.Add(serversAndInstanceIds.Item1.ToString(), serversAndInstanceIds.Item2);
+                ec2InstanceId.Add(serversAndInstanceIds.Item1.Host, serversAndInstanceIds.Item2);
             }
             Console.WriteLine(ec2InstanceId.ToJson());
             builder.RegisterInstance(ec2InstanceId).As<IDictionary<string, string>>();

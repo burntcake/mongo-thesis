@@ -29,7 +29,6 @@ namespace MongoDBExperiments.Utils
             Console.WriteLine(server_ip);
             if (instanceIds.TryGetValue(server_ip, out instance_id))
             {
-                Console.WriteLine(instance_id);
                 runner.Run("python3", $"StartStop.py OFF {instance_id}");
             }
         }

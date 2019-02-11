@@ -41,10 +41,10 @@ namespace MongoDBExperiments.Config
         [Option(Default = 60, HelpText = "The time this experiment will run for (in seconds)")]
         public int ExperimentTime { get; set; }
 
-        [Option(Default = new string[] { "10.0.70.152", "10.0.21.232", "10.0.50.226" }, HelpText = "List of mongo servers")]
+        [Option(Default = new string[] { "52.64.89.31", "52.65.140.33", "52.65.171.51" }, HelpText = "List of mongo servers")]
         public IEnumerable<string> Servers { get; set; }
         
-        [Option(Default = new string[] { "i-02c28668c91630b9e", "i-04e936fe73b7e4e9d", "i-0a2540339b0b61499" }, HelpText = "List of AWS instance ids. Please write in corresponding order to servers.")]
+        [Option(Default = new string[] { "i-09842854c4bcac788", "i-08fa1b3d2ed8d0068", "i-0295fa7fc6dad31fd" }, HelpText = "List of AWS instance ids. Please write in corresponding order to servers.")]
         public IEnumerable<string> InstanceIds { get; set; }
     }
 }

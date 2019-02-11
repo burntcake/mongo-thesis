@@ -105,7 +105,7 @@ def generate_command(content):
                 elif short_flag == 's' or short_flag == 'id':
                     if short_flag == 'id':
                         instance_ids = param
-                        print("instance ids: ", param)
+                        print("instance id: ", param)
                     elif short_flag == "s":
                         print("servers: ", param)
                     command_parameter = param

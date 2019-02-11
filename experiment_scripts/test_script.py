@@ -81,7 +81,6 @@ def generate_command(content):
             if len(item.split(":")) >= 2:
                 short_flag = item.split(":")[0]
                 param_list = item.split(":")[1].split("|")
-                instance_ids = param_list
                 print("content is !!!!!!!!: ", instance_ids)
                 param = " ".join(param_list)
 
@@ -105,6 +104,8 @@ def generate_command(content):
                     if int(param) > 0:
                         repeat_time = int(param)
                 elif short_flag == 's' or short_flag == 'id':
+                    if short_flag == 'id':
+                        instance_ids = param_list
                     command_parameter = param
 
             if command_flag is not None and command_parameter is not None:

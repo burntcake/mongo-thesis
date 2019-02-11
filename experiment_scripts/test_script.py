@@ -271,6 +271,9 @@ def start_instances():
 
     if instance_ids is not None:
         ids = instance_ids
+        print("123123123123123   ", ids[0])
+        print("123123123123123   ", ids[1])
+        print("123123123123123   ", ids[2])
 
     replica_set = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME, ids)
     replica_set.start_all()

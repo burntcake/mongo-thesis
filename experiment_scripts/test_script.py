@@ -104,7 +104,7 @@ def generate_command(content):
                         repeat_time = int(param)
                 elif short_flag == 's' or short_flag == 'id':
                     if short_flag == 'id':
-                        instance_ids = param
+                        instance_ids = param.split(" ")
                         print("instance id: ", param)
                     elif short_flag == "s":
                         print("servers: ", param)

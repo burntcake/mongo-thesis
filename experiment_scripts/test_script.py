@@ -10,6 +10,7 @@ import time
 
 
 stop_all = True
+instance_ids = None
 
 
 # Collect simplified commands
@@ -55,6 +56,7 @@ def collect_experiment_plan():
 
 # translate the simplified command to original command
 def generate_command(content):
+    global instance_ids
     commands = []
 
     for line in content:
@@ -102,6 +104,7 @@ def generate_command(content):
                         repeat_time = int(param)
                 elif short_flag == 's' or short_flag == 'id':
                     command_parameter = param
+                    instance_ids = param.split(" ")
 
             if command_flag is not None and command_parameter is not None:
                 # command_args.append("--" + command_flag + " " + command_parameter + " ")
@@ -260,18 +263,26 @@ def make_experiment_dir():
 # start all aws instances
 def start_instances():
     print("Starting all instances")
-    mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
-                            AWS_INSTANCE_ID_LIST)
-    mongo.start_all()
+    ids = AWS_INSTANCE_ID_LIST
+
+    if instance_ids is not None:
+        ids = instance_ids
+
+    replica_set = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME, ids)
+    replica_set.start_all()
     print("\nAll instance started\n")
 
 
 # stop all aws instances
 def stop_instances():
     print("Stopping all instances")
-    mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
-                            AWS_INSTANCE_ID_LIST)
-    mongo.stop_all()
+    ids = AWS_INSTANCE_ID_LIST
+
+    if instance_ids is not None:
+        ids = instance_ids
+
+    replica_set = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME, ids)
+    replica_set.stop_all()
     print("\nAll instance stopped\n")
 
 

@@ -25,6 +25,8 @@ class MongoReplicaSet:
     def start_all(self):
         print("!!!!!!", self.instance_id_list)
         for instance_id in self.instance_id_list:
+            print("1111111", instance_id)
+        for instance_id in self.instance_id_list:
             print("idididiid", instance_id)
             try:
                 self.client.start_instances(InstanceIds=[instance_id], DryRun=True)

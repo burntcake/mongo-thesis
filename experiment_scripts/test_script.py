@@ -81,7 +81,7 @@ def generate_command(content):
             if len(item.split(":")) >= 2:
                 short_flag = item.split(":")[0]
                 param_list = item.split(":")[1].split("|")
-                print("content is !!!!!!!!: ", instance_ids)
+                print("content is !!!!!!!!: ", param_list)
                 param = " ".join(param_list)
 
             if param is None:

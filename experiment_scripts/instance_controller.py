@@ -23,6 +23,7 @@ class MongoReplicaSet:
 
     # start all aws instances
     def start_all(self):
+        print("!!!!!!", self.instance_id_list)
         for instance_id in self.instance_id_list:
             try:
                 self.client.start_instances(InstanceIds=[instance_id], DryRun=True)

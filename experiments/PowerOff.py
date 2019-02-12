@@ -9,5 +9,3 @@ response = client.send_command(
     Parameters={'commands': commands},
     InstanceIds=instance_id,
 )
-
-print(response)

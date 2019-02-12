@@ -9,9 +9,26 @@ from instance_controller import *
 import time
 
 
+stop_all = True
+instance_ids = None
+
+
 # Collect simplified commands
 def collect_experiment_plan():
-    print("1. Enter/Paste your experiment settings\n" +
+    global stop_all
+
+    while 1:
+        user_input = input("Stop all nodes after the experiment?(y/n):\n")
+        if user_input.lower() == 'y':
+            stop_all = True
+            break
+        elif user_input.lower() == 'n':
+            stop_all = False
+            break
+        else:
+            print("Invalid input, please try again.")
+
+    print("\n1. Enter/Paste your experiment settings\n" +
           "2. IMPORTANT! Please add a new line at the end\n"+
           "3. Command-D (MACOS), Ctrl-D or Ctrl-Z (Windows) to save it")
     print("\nExample of a valid experiment setting:" )
@@ -36,8 +53,10 @@ def collect_experiment_plan():
 
     return contents
 
+
 # translate the simplified command to original command
 def generate_command(content):
+    global instance_ids
     commands = []
 
     for line in content:
@@ -83,7 +102,12 @@ def generate_command(content):
                 elif short_flag == 'rpt':
                     if int(param) > 0:
                         repeat_time = int(param)
-                elif short_flag == 's':
+                elif short_flag == 's' or short_flag == 'id':
+                    if short_flag == 'id':
+                        instance_ids = param.split(" ")
+                        print("instance id: ", param)
+                    elif short_flag == "s":
+                        print("servers: ", param)
                     command_parameter = param
 
             if command_flag is not None and command_parameter is not None:
@@ -181,13 +205,14 @@ def process_results(experiment_result_path, result_name, log_path, experiment_id
 # write logs to the log file
 def write_to_log(path_to_log, content):
     f = open(path_to_log, "a+")
-    f.write(str(content)+ "\r\n")
+    f.write(str(content) + "\r\n")
     f.close()
 
 
 # summarize experiment results and generate a report in .csv format
 def summarize_results(output_path, ops):
     # pp.pprint(ops)
+    print("Generating report...")
     cols = list(RESULT_SUMMARY_DICT.values())
     cols.extend(RESULT_VALUES)
     statistic_df = pandas.DataFrame(index=ops.keys(), columns=cols)
@@ -210,8 +235,8 @@ def summarize_results(output_path, ops):
     for file_path in report_file_names:
         file_name = file_path.split("/")[-1]
         target_index = int(re.findall(r'-?\d+\.?\d*', file_name)[0])
-        print("t", target_index)
-        with open(file_path) as f:
+        # print("t", target_index)
+        with open(file_path, encoding='UTF-8') as f:
             for measurement in RESULT_VALUES:
                 content = f.readline()
                 statistic_df.loc[target_index, measurement] = int(re.findall(r'-?\d+\.?\d*', content)[0])
@@ -242,18 +267,26 @@ def make_experiment_dir():
 # start all aws instances
 def start_instances():
     print("Starting all instances")
-    mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
-                            AWS_INSTANCE_ID_LIST)
-    mongo.start_all()
+    ids = AWS_INSTANCE_ID_LIST
+
+    if instance_ids is not None:
+        ids = instance_ids
+
+    replica_set = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME, ids)
+    replica_set.start_all()
     print("\nAll instance started\n")
 
 
 # stop all aws instances
 def stop_instances():
-    print("All task finished, stopping all instances")
-    mongo = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME,
-                            AWS_INSTANCE_ID_LIST)
-    mongo.stop_all()
+    print("Stopping all instances")
+    ids = AWS_INSTANCE_ID_LIST
+
+    if instance_ids is not None:
+        ids = instance_ids
+
+    replica_set = MongoReplicaSet(AWS_RESOURCE_TYPE, AWS_REGION_NAME, ids)
+    replica_set.stop_all()
     print("\nAll instance stopped\n")
 
 
@@ -271,7 +304,9 @@ def experiment_engine():
     experiment_result_path, ops = execute_experiment_plan(commands, inputs)
     summarize_results(experiment_result_path, ops)
     # close all instances when the experiment is done
-    stop_instances()
+    if stop_all:
+        stop_instances()
+    print("All task finished!")
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ PROCESSING_FAILURES_SCRIPT_PATH = "../processing/failures/"
 AWS_CREDENTIAL = "~/.aws/credentials"
 AWS_RESOURCE_TYPE = "ec2"
 AWS_REGION_NAME = "ap-southeast-2"
-AWS_INSTANCE_ID_LIST = ["i-09842854c4bcac788", "i-08fa1b3d2ed8d0068", "i-0295fa7fc6dad31fd"]
+AWS_INSTANCE_ID_LIST = ["i-0b3d84a2472cb9970", "i-0788d3f17f00e9f41", "i-00663b13a3c9bf7e5"]
 
 VALID_FLAGS = {
     "p" : "readpreference",

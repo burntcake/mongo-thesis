@@ -8,5 +8,7 @@ namespace MongoDBExperiments.Experiment
         public ObjectId Id { get; set; }
 
         public int Val { get; set; }
+
+        public string MsSinceEpoch { get; set; }
     }
 }

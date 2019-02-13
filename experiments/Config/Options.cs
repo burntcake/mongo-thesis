@@ -44,7 +44,7 @@ namespace MongoDBExperiments.Config
         [Option(Default = new string[] { "52.64.89.31", "52.65.140.33", "52.65.171.51" }, HelpText = "List of mongo servers")]
         public IEnumerable<string> Servers { get; set; }
         
-        [Option(Default = new string[] { "i-09842854c4bcac788", "i-08fa1b3d2ed8d0068", "i-0295fa7fc6dad31fd" }, HelpText = "List of AWS instance ids. Please write in corresponding order to servers.")]
+        [Option(Default = new string[] { "i-0b3d84a2472cb9970", "i-0788d3f17f00e9f41", "i-00663b13a3c9bf7e5" }, HelpText = "List of AWS instance ids. Please write in corresponding order to servers.")]
         public IEnumerable<string> InstanceIds { get; set; }
     }
 }

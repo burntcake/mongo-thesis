@@ -103,7 +103,9 @@ namespace MongoDBExperiments.Experiment
             int val = rng.Next();
             TimeSpan time = new TimeSpan(DateTimeOffset.UtcNow.Ticks);
             long microSeconds = (time.Ticks - ((long)time.TotalSeconds * 10000000)) / 10;
-            var doc = new ExperimentDocument { Val = val , MsSinceEpoch = $"{{ts: \"{DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()}s {microSeconds}us\"}}"};
+            long unixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            string timestamp = $@"{{ts: ""{unixSeconds}s {microSeconds}us""}}";
+            var doc = new ExperimentDocument { Val = val , MsSinceEpoch = timestamp};
 
             DateTime before = DateTime.Now;
 
